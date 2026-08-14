@@ -1,0 +1,6 @@
+# Normalize line endings to LF on checkout for cross-platform consistency.
+# Eliminates Git's "LF will be replaced by CRLF" warnings on Windows.
+* text=auto eol=lf
+
+# SVG icons are text (kept as LF); build outputs/ binaries stay untouched.
+*.svg text

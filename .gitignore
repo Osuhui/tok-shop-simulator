@@ -6,6 +6,9 @@ npm-debug.log*
 # Simulation run artifacts (regenerated, expire with balance params)
 sim_*.txt
 sim_*.log
+
+# Local Claude Code settings (machine/user-specific, not shared)
+.claude/settings.local.json
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
