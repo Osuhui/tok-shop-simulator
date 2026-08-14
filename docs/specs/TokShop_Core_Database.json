@@ -1,0 +1,26 @@
+{
+  "game_name": "TokShop Simulator",
+  "version": "1.0.0",
+  "initial_state": {
+    "gold": 2000,
+    "shopLevel": 1,
+    "healthScore": 5,
+    "region": "SEA"
+  },
+  "parody_products": [
+    {
+      "id": "p1",
+      "parody_name": "Stan-Up Mega Cup",
+      "real_ref": "Stanley Cup",
+      "cost": 3.5,
+      "base_price": 35
+    },
+    {
+      "id": "p2",
+      "parody_name": "jPhone 18 Pro",
+      "real_ref": "iPhone 16",
+      "cost": 150,
+      "base_price": 699
+    }
+  ]
+}

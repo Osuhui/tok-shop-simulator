@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>《TokShop Simulator / 跨境小店模拟器》游戏设计大纲 (GDD)</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm 15mm;
+            @bottom-right {
+                content: counter(page);
+                font-size: 9pt;
+                font-family: "Helvetica Neue", Arial, sans-serif;
+                color: #8c92a6;
+            }
+            @bottom-left {
+                content: "《跨境小店模拟器》游戏内容设计文档";
+                font-size: 9pt;
+                font-family: "Helvetica Neue", Arial, sans-serif;
+                color: #8c92a6;
+            }
+        }
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+            line-height: 1.6;
+            color: #2c3e50;
+            margin: 0;
+            padding: 0;
+            font-size: 10.5pt;
+            background-color: #ffffff;
+        }
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        h1 {
+            font-size: 24pt;
+            color: #0f172a;
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+        .subtitle {
+            text-align: center;
+            font-size: 12pt;
+            color: #64748b;
+            margin-bottom: 30px;
+        }
+        h2 {
+            font-size: 14pt;
+            color: #1e1b4b;
+            border-left: 5px solid #ff0050;
+            padding-left: 10px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            page-break-after: avoid;
+        }
+        h3 {
+            font-size: 11.5pt;
+            color: #0f172a;
+            margin-top: 15px;
+            margin-bottom: 8px;
+            page-break-after: avoid;
+        }
+        p {
+            margin-top: 0;
+            margin-bottom: 10px;
+            text-align: justify;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 9.5pt;
+            page-break-inside: avoid;
+        }
+        th {
+            background-color: #0f172a;
+            color: #ffffff;
+            font-weight: bold;
+            text-align: left;
+            padding: 8px 10px;
+            border: 1px solid #cbd5e1;
+        }
+        td {
+            padding: 8px 10px;
+            border: 1px solid #cbd5e1;
+        }
+        tr:nth-child(even) td {
+            background-color: #f8fafc;
+        }
+        ul, ol {
+            margin-top: 0;
+            margin-bottom: 12px;
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 6px;
+        }
+        .highlight-box {
+            background-color: #fff1f2;
+            border-left: 4px solid #f43f5e;
+            padding: 12px;
+            margin: 15px 0;
+            font-size: 9.5pt;
+            page-break-inside: avoid;
+        }
+        .highlight-box strong {
+            color: #9f1239;
+        }
+        .math {
+            font-family: 'Times New Roman', Times, serif;
+            font-style: italic;
+            font-weight: bold;
+            color: #0f172a;
+        }
+        .text-center {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>《TokShop Simulator / 跨境小店模拟器》</h1>
+    <div class="subtitle">游戏详细内容设计文档 (Game Design Document)</div>
+
+    <h2>1. 游戏概述与核心定位</h2>
+    <p><strong>游戏名称：</strong>TokShop Simulator (暂定名: 跨境小店模拟器)</p>
+    <p><strong>游戏类型：</strong>3D 模拟经营 (SIM) + 策略生存 (Strategy)</p>
+    <p><strong>核心目标：</strong>兼顾娱乐性与硬核科普，通过还原短视频/直播带货电商的完整链路（选品、上架、找达人、爆单履约、合规应对），让零经验的玩家在游戏中熟悉真实的跨境电商运营流程与核心陷阱。</p>
+    <p><strong>核心循环 (Core Loop)：</strong></p>
+    <ol>
+        <li><strong>市场洞察：</strong> 分析流行趋势，在供应链货盘选定商品。</li>
+        <li><strong>店铺上架：</strong> 撰写符合合规、避免违规词的商品详情页。</li>
+        <li><strong>营销引流：</strong> 制作/投放短视频，或在“达人广场”建联 AI 达人寄样带货。</li>
+        <li><strong>订单履约：</strong> 在时效内安排头程与尾程物流，精算运费，处理海关与海外仓事务。</li>
+        <li><strong>资金回笼：</strong> 回款扣除成本与佣金，提升店铺等级与信誉分，解锁新区域与新货盘。</li>
+    </ol>
+
+    <h2>2. 区域商业地图设计 (Global Regions)</h2>
+    <p>游戏包含三大具有完全不同数值倾向与合规难度的区域市场，玩家将随店铺等级逐步解锁：</p>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 15%;">区域地图</th>
+                <th style="width: 25%;">准入门槛与政策</th>
+                <th style="width: 20%;">物流/回款数值</th>
+                <th style="width: 20%;">核心难点与痛点</th>
+                <th style="width: 20%;">爆款权重类目</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>东南亚区<br>(印尼/泰国)</strong></td>
+                <td>极低。支持本土/跨境小店，不需要复杂的企业资质。</td>
+                <td>客单价低 (<span class="math">$5-$15</span>)<br>物流快，回款账期短 (7天)</td>
+                <td>COD (货到付款) 拒签率高达 15%，物流易因暴雨延误。</td>
+                <td>平价女装、新奇特零食、学生文具</td>
+                </tr>
+            <tr>
+                <td><strong>英国区<br>(UK)</strong></td>
+                <td>中等。需VAT税务登记，合规要求逐步收紧。</td>
+                <td>客单价中 (<span class="math">$20-$40</span>)<br>官方物流，回款 14 天</td>
+                <td>退换货率极高 (用户习惯成熟)，欧洲环保与包装法限制。</td>
+                <td>潮流配饰、美妆个护、数码周边</td>
+            </tr>
+            <tr>
+                <td><strong>北美区<br>(US)</strong></td>
+                <td>极高。必须绑定美区本地联邦税号(EIN)或强合规跨境店。</td>
+                <td>客单价高 (<span class="math">$35-$80</span>)<br>必须海外仓，回款 15-30 天</td>
+                <td>侵权风控极其变态，达人佣金高。必须采用本地发货。</td>
+                <td>智能小家电、宠物用品、解压玩具</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>3. 核心游戏系统设计</h2>
+
+    <h3>3.1 供应链与智能选品系统 (Sourcing System)</h3>
+    <p>玩家通过“供应链市场”NPC 或电脑端查看“货盘”。产品分为正品、白牌、山寨品（高风险）。</p>
+    <ul>
+        <li><strong>核心指标：</strong> 采购价、打包体积、类目审核状态（如食品/美妆需要特殊认证）。</li>
+        <li><strong>违规词玩法：</strong> 上架商品时，玩家需在模拟键盘中选择/修改标题。如果直接使用“100% Genuine Nike”会触发侵权惩罚；如果含有“一秒见效、防癌”等词会触发广告法违规。</li>
+    </ul>
+
+    <h3>3.2 达人建联与营销系统 (Affiliate System)</h3>
+    <p>这是游戏的中期核心。玩家不能只靠自然流量，必须进入“达人广场”寻找虚拟 AI 达人。</p>
+    <div class="highlight-box">
+        <strong>达人建联核心成功率公式：</strong><br>
+        在文本交互中，达人对寄样邀约的接受概率由以下公式决定：<br>
+        <div class="text-center" style="margin: 8px 0;">
+            <span class="math">P_{success} = Base 	imes (1 + rac{V_{comm} - V_{req}}{20}) 	imes Score_{match} 	imes (1 - F_{risk})</span>
+        </div>
+        其中，<span class="math">Base</span> 为达人基础合作意愿；<span class="math">V_{comm}</span> 为玩家开出的佣金比例，<span class="math">V_{req}</span> 为达人期望佣金；<span class="math">Score_{match}</span> 为商品与达人粉丝标签的匹配度(0.5~1.5)；<span class="math">F_{risk}</span> 为店铺负面健康度扣分权重。
+    </div>
+
+    <h3>3.3 物流履约与海外仓系统 (Logistics)</h3>
+    <p>出单后，工作室/仓库的打包台上会堆积待发货订单。玩家需在模拟电脑上完成发货配置：</p>
+    <ol>
+        <li><strong>自发货模式：</strong> 玩家手动打包，贴上面单，交给上门揽收的“兔子速递 (Rabbit Express)”。若时效超时 (如48小时未揽收)，将被扣除店铺分并罚款。</li>
+        <li><strong>海外仓模式 (FBA/海外仓)：</strong> 提前批量批量囤货至美区海外仓。订单产生后自动扣减库存并秒发货。优点是时效分极高，缺点是前期资金占用极大，且有滞销仓储费风险。</li>
+    </ol>
+
+    <h2>4. 关卡与随机事件库 (Roguelike Elements)</h2>
+    <p>游戏为了防止变成枯燥的数值挂机，引入了高度拟真的“每日突发事件系统”，用于教育玩家各种避坑指南：</p>
+    
+    <h3>4.1 风控与处罚事件</h3>
+    <ul>
+        <li><strong>案例一【假货小黑屋】：</strong> 系统检测到你售卖的“Stan-Up 巨型水杯”与某知名保温杯品牌外观高度相似。
+            <br><em>玩家选择：</em> A. 提交虚假授权书（5%概率通过，95%直接永久封店）；B. 认罚下架并缴纳 $500 罚款；C. 找服务商“强开链接”（扣除大量现金，且可能遭遇连带欺诈）。
+        </li>
+        <li><strong>案例二【高货不对板】：</strong> 供应链工厂在批量发货时偷工减料，导致大批美区用户收到货后给出一星差评。
+            <br><em>后果：</em> 店铺健康分直接从 4.8 跌至 3.2，平台全面限流，所有短视频播放量被锁死在 200 播放。
+        </li>
+    </ul>
+
+    <h3>4.2 爆发性正面/双刃剑事件</h3>
+    <ul>
+        <li><strong>案例三【超级爆单危机】：</strong> 某合作的万粉达人视频突然进入系统流量池，单日播放量破 500 万，瞬间产生 20,000 单订单。
+            <br><em>危机：</em> 玩家手头现金只有 $2,000，无法向工厂支付垫资采购这 20,000 个货品的成本。若 72 小时内不发货，店铺将因延迟发货被平台关闭并扣留已有资金。
+            <br><em>解法：</em> 玩家必须紧急向游戏内的“极速贷”机构借高利贷，或者寻找投资人让出店铺股份，体验真实电商的现金流断裂生死时速。
+        </li>
+    </ul>
+
+    <h2>5. 版权隔离与避险美术指导 (Anti-Infringement Art Guide)</h2>
+    <p>为确保游戏在全球 Steam 及移动端顺利上架，杜绝官方合规团队及大牌法务的诉讼，美术与文本必须严格执行以下隔离标准：</p>
+    
+    <h3>5.1 平台界面 (UI) 隔离</h3>
+    <ul>
+        <li><strong>主色调：</strong> 严禁纯黑色底配合 #FF0050 (玫红) 与 #00F5FF (青蓝) 的强对比经典配色。界面应采用深灰蓝 (#1e293b) 为主底色，点缀色改用亮紫色 (#a855f7) 或电光橙 (#f97316)。</li>
+        <li><strong>功能名词重构：</strong> TikTok Shop 变更为 <strong>“TokShop”</strong> 或 <strong>“ClickClok Market”</strong>；达人广场 (Creator Marketplace) 变更为 <strong>“Talent Hub”</strong>；精选联盟变更为 <strong>“ShareLink”</strong>。</li>
+    </ul>
+
+    <h3>5.2 供应链产品视觉恶搞 (Parody Design)</h3>
+    <p>所有高辨识度商品一律采用 3D 建模变形与文字恶搞：</p>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 30%;">真实世界受保护商品</th>
+                <th style="width: 35%;">游戏内恶搞名称 (文本)</th>
+                <th style="width: 35%;">3D 建模/贴图修改指南</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>iPhone 手机系列</strong></td>
+                <td>jPhone 18 Pro Max</td>
+                <td>后置三摄镜头改成“正三角形”排列，背部换成“咬了一口的鸭梨”Logo。</td>
+            </tr>
+                <td><strong>Stanley 保温吸管杯</strong></td>
+                <td>Stan-Up Mega Cup</td>
+                <td>杯身经典把手线条加粗变形，品牌英文字体换成斜体无衬线字。</td>
+            </tr>
+            <tr>
+                <td><strong>Dyson 吹风机</strong></td>
+                <td>Dy-Soon 气旋美发棒</td>
+                <td>中空进风口从圆形改成标志性的正方形中空，颜色从紫红改为明黄。</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>6. 商业化模式设计 (Monetization)</h2>
+    <ol>
+        <li><strong>C端玩家 (Steam/手游)：</strong> 基础游戏采用买断制 (Steam 售价约 $9.99)，手机端采用免费下载+内购（皮肤、免广告券、加速模拟沙盒包）。</li>
+        <li><strong>B端机构/工具商 (最大盈利点)：</strong> 
+            <ul>
+                <li><strong>游戏内无缝植入：</strong> 游戏内的物流巨头“兔子速递”可付费变更为真实出海物流商的品牌广告；游戏内的ERP办公系统可直接植入真实跨境ERP软件的简化版界面。</li>
+                <li><strong>培训机构定制教具：</strong> 将游戏打包成“跨境电商实训软件”，向国内各高校的电子商务专业、民办跨境电商培训机构出售批量授权。</li>
+            </ul>
+        </li>
+    </ol>
+
+</body>
+</html>
