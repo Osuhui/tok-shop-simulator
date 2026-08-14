@@ -447,6 +447,7 @@ export interface GameState {
   reviews: Review[];                        // 评价 / 复购
   carrierId: CarrierId;                     // 当前物流承运商
   legalSubscribed: boolean;                 // 法务月费订阅
+  onboardingRewardClaimed?: boolean;          // 新手引导完成奖励（$500）是否已发放（可选，缺省视为未发）
   season: number;                           // 当前季节索引（由天数推导）
   hotCategories: ProductCategory[];         // 当季热门品类（趋势 / 季节驱动）
   identityId?: IdentityId;

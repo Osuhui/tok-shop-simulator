@@ -201,6 +201,7 @@ function generateInitialState(opts: NewGameOptions = {}): GameState {
     goal,
     activeChainId: IDENTITIES[identityId].storyChainId,
     netWorthHistory: [],
+    onboardingRewardClaimed: false,
   };
 }
 
@@ -741,7 +742,7 @@ function advanceOneDay(
   const orders = [...ctx.state.orders, ...ctx.newOrders];
 
   // 事件检查（新一天结束后、存档前）：暂停并展示事件
-  const nextState: GameState = {
+  let nextState: GameState = {
     ...ctx.state,
     orders,
     todayRevenue: ctx.todayRevenue,
@@ -769,6 +770,21 @@ function advanceOneDay(
     if (expiry !== undefined) eventCooldowns[chainEvent.id] = expiry;
     set({ ...nextState, activeEvent: chainEvent, gamePhase: 'event', eventCooldowns });
     return;
+  }
+
+  // 新手引导完成奖励：完成 4 步（有货 / 有单 / 发过货 / 升到 Lv.2）且未发奖时一次性 +$500
+  if (
+    !nextState.onboardingRewardClaimed &&
+    nextState.inventory.some((i) => i.quantity > 0) &&
+    nextState.orders.some((o) => o.status !== 'pending') &&
+    nextState.player.shopLevel >= 2
+  ) {
+    nextState = {
+      ...nextState,
+      onboardingRewardClaimed: true,
+      player: { ...nextState.player, gold: Math.round((nextState.player.gold + 500) * 100) / 100 },
+    };
+    fxBus.emit('gold', '🎁 新手引导完成 +$500');
   }
 
   // 自动存档

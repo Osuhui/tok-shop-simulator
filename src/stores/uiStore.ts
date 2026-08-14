@@ -12,6 +12,8 @@ interface UIState {
   sceneLoaded: boolean;
   /** Toast消息队列 */
   toasts: Toast[];
+  /** 首次进入新手引导是否已看过（本机 localStorage 持久化，跨存档只弹一次） */
+  onboardingSeen: boolean;
 
   // Actions
   toggleNotifications: () => void;
@@ -19,6 +21,7 @@ interface UIState {
   setSceneLoaded: (loaded: boolean) => void;
   addToast: (message: string, type: Toast['type']) => void;
   removeToast: (id: string) => void;
+  setOnboardingSeen: () => void;
 }
 
 export interface Toast {
@@ -32,6 +35,7 @@ export const useUIStore = create<UIState>((set) => ({
   showSettings: false,
   sceneLoaded: false,
   toasts: [],
+  onboardingSeen: typeof localStorage !== 'undefined' && localStorage.getItem('tokshop.onboardingSeen') === '1',
 
   toggleNotifications: () => set(s => ({ showNotifications: !s.showNotifications })),
   toggleSettings: () => set(s => ({ showSettings: !s.showSettings })),
@@ -52,5 +56,10 @@ export const useUIStore = create<UIState>((set) => ({
 
   removeToast: (id: string) => {
     set(s => ({ toasts: s.toasts.filter(t => t.id !== id) }));
+  },
+
+  setOnboardingSeen: () => {
+    try { localStorage.setItem('tokshop.onboardingSeen', '1'); } catch { /* ignore */ }
+    set({ onboardingSeen: true });
   },
 }));

@@ -21,6 +21,7 @@ import { CarrierPanel } from '../panels/CarrierPanel';
 import { ListingPanel } from '../panels/ListingPanel';
 import { SaveLoadPanel } from '../panels/SaveLoadPanel';
 import { Modal } from '../ui/Modal';
+import { OnboardingModal } from './OnboardingModal';
 import { AnimatePresence } from 'framer-motion';
 import { EventDialog } from '../panels/EventDialog';
 import { FxLayer } from '../fx/FxLayer';
@@ -35,6 +36,8 @@ export const GameScreen: React.FC = () => {
   const showSettings = useUIStore(s => s.showSettings);
   const toggleNotifications = useUIStore(s => s.toggleNotifications);
   const toggleSettings = useUIStore(s => s.toggleSettings);
+  const onboardingSeen = useUIStore(s => s.onboardingSeen);
+  const setOnboardingSeen = useUIStore(s => s.setOnboardingSeen);
   const notifications = useGameStore(s => s.notifications);
   const markNotificationRead = useGameStore(s => s.markNotificationRead);
 
@@ -146,6 +149,9 @@ export const GameScreen: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      {/* 首次进入新手引导浮层 */}
+      <OnboardingModal isOpen={gamePhase === 'playing' && !onboardingSeen} onClose={setOnboardingSeen} />
     </div>
   );
 };
