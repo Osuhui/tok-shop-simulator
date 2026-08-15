@@ -2,6 +2,7 @@ import React from 'react';
 import { Panel } from '../ui/Panel';
 import { ProgressBar } from '../ui/ProgressBar';
 import { useGameStore } from '../../stores/gameStore';
+import { ONBOARDING_STEPS } from '../onboardingSteps';
 import { formatGold, formatDay, formatNumber } from '../../utils/format';
 import { REGIONS } from '../../game/data/regions';
 import { getProduct } from '../../game/data/products';
@@ -57,12 +58,8 @@ export const DashboardPanel: React.FC<Props> = ({ onClose }) => {
   const hasOrder = orders.length > 0;
   const hasShipped = orders.some(o => o.status !== 'pending');
   const hasUpgraded = player.shopLevel >= 2;
-  const steps = [
-    { key: 'stock', title: '采购初始库存', hint: '去「选品」买点货，仓库才有得卖', done: hasStock, panel: 'sourcing' },
-    { key: 'order', title: '获得第一笔订单', hint: '等自然流量，或去「达人」谈合作引流', done: hasOrder, panel: 'talentHub' },
-    { key: 'ship', title: '完成首单发货', hint: '去「物流」把待处理订单发出去', done: hasShipped, panel: 'logistics' },
-    { key: 'upgrade', title: '升级店铺至 Lv.2', hint: '满足营收/订单/金币条件后升级', done: hasUpgraded, panel: 'shop' },
-  ];
+  const doneById: Record<string, boolean> = { stock: hasStock, order: hasOrder, ship: hasShipped, upgrade: hasUpgraded };
+  const steps = ONBOARDING_STEPS.map(s => ({ ...s, done: doneById[s.id] }));
 
   return (
     <Panel title="📊 每日看板" onClose={onClose}>
@@ -130,7 +127,7 @@ export const DashboardPanel: React.FC<Props> = ({ onClose }) => {
           <h4 className="text-sm font-bold text-purple-300 mb-3">👋 新手第一步</h4>
           <div className="space-y-1.5">
             {steps.map(s => (
-              <OnboardStep key={s.key} done={s.done} title={s.title} hint={s.hint} panel={s.panel}
+              <OnboardStep key={s.id} done={s.done} title={s.title} hint={s.desc} panel={s.panel}
                 onNavigate={(p) => { setActivePanel(p); }} />
             ))}
           </div>

@@ -1,17 +1,11 @@
 import React from 'react';
 import { Modal } from '../ui/Modal';
+import { ONBOARDING_STEPS } from '../onboardingSteps';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
 }
-
-const STEPS = [
-  { icon: '🛒', title: '采购初始库存', desc: '去「选品」购买商品，仓库才有得卖。' },
-  { icon: '📨', title: '获得第一笔订单', desc: '等待自然流量，或去「达人」谈合作引流。' },
-  { icon: '📦', title: '完成首单发货', desc: '去「物流」把待处理订单发出去，别超期被取消。' },
-  { icon: '⬆️', title: '升级店铺至 Lv.2', desc: '攒够营收 / 订单 / 金币后升级，扩张经营。' },
-];
 
 export const OnboardingModal: React.FC<Props> = ({ isOpen, onClose }) => (
   <Modal isOpen={isOpen} onClose={onClose} title="👋 欢迎来到 TokShop！" maxWidth="max-w-lg">
@@ -20,8 +14,8 @@ export const OnboardingModal: React.FC<Props> = ({ isOpen, onClose }) => (
       <span className="text-emerald-400 font-semibold">+$500</span> 启动资金：
     </p>
     <div className="space-y-2 mb-5">
-      {STEPS.map((s, i) => (
-        <div key={s.title} className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-800/40">
+      {ONBOARDING_STEPS.map((s, i) => (
+        <div key={s.id} className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-800/40">
           <span className="w-7 h-7 rounded-full bg-purple-500/15 text-purple-300 flex items-center justify-center text-sm shrink-0">
             {s.icon}
           </span>
