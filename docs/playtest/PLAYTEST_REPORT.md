@@ -178,6 +178,16 @@
 - **8x 倍速（P1-2）**：`GameSpeed` 扩展至 `'8x'`，`SPEED_DAY_DURATION_MS` 补 `8x → 3750ms`，`TopBar` 速度组补 8x 按钮，对齐报告 P1-2 建议的「约 3.75 秒/天」（`5aaf4ce`）。
 - **引导常量重构**：抽取 `src/components/onboardingSteps.ts` 共享 `ONBOARDING_STEPS`，`DashboardPanel` 与 `OnboardingModal` 复用，消除两处重复硬编码（code-review Standards 轴 Duplicated Code 修复）（`5115cb8`）。
 
+### 难度校准（hard · 2026-08-14）
+
+针对「hard 初始资金偏紧、清算线不友好」的已知风险做校准，让 hard 从极限生存回到「努努力能成」的可达成挑战，同时保留比 normal 明显的难度梯度。
+
+- **改动（仅 hard 生效参数）**：`startGoldMultiplier` `0.8 → 0.9`（student / veteran / entrepreneur 起始资金分别约 $3,150 / $4,500 / $6,300）；目标 `day 300 → 330`、`shopLevel 10 → 9`、`netWorth $65,000 → $55,000`。
+- **未动全局破产线**：破产判定 `gold <= -500` 为全局统一逻辑，easy / normal 已稳定通关，本次不加宽以免扩大改动面；若后续想更宽松可单独评估。
+- **验证（headless sim，UK 区 9 配置 × 3 局）**：改动后仍为 **27/27 victory**，难度梯度健康 —— easy D41–71 / normal D72–129 / **hard D111–170**；hard 比 normal 晚达成 40–80 天、目标净资产高 $20k，但仍远早于 330 天上限，真人留有容错空间。
+
+> **校准中挖出的技术债（待办）**：`difficulties.hard` 的 `blockOpening`（需四证齐全才开业）、`gracePeriodDays`、`penaltyMultiplier` 三字段**已在类型与配置中定义，却从未接进 `gameStore` 与模拟逻辑**——设计文档《Content_Design》描述的「hard 开业封锁 + 0 宽限 + 1.3 罚款」目前是 dead config，hard 的真实难度仅来自起始资金倍率与目标数值。这意味着：(a) 当前 hard 实际比设计意图宽松得多；(b) 若要真正兑现设计里的 hard 挑战，需把这三字段接进 `gameStore`（开业守卫 / 逾期罚款倍率），但那会显著加难，与本次「更可达」目标方向相反，故留作独立技术债跟踪。
+
 ### 关键决策：引导步骤偏离报告原文
 
 报告 P1-1 建议的第 2 步是「去上架开张」，实现采用「获得第一笔订单」。这是**有意偏差**：初始库存默认 `isListed=true`（开局即可售），若单独列「上架」步骤会开局即完成、失去引导意义；故以「获得首单」作为更关键且可检测的早期目标（发货、升级均依赖先有订单）。已在 `onboardingSteps.ts` 注释固化。

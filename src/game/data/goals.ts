@@ -17,9 +17,9 @@ export const GOALS: Record<DifficultyId, GameGoal> = {
     label: '规模扩张：第 365 天前做到 Lv.8、净资产 $35,000',
   },
   hard: {
-    day: 300,
-    shopLevel: 10,
-    netWorth: 65000,
-    label: '跨境巨头：第 300 天前做到 Lv.10、净资产 $65,000',
+    day: 330,
+    shopLevel: 9,
+    netWorth: 55000,
+    label: '跨境巨头：第 330 天前做到 Lv.9、净资产 $55,000',
   },
 };
