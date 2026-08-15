@@ -6,7 +6,7 @@ import { ProgressBar } from '../ui/ProgressBar';
 import { SPEED_LABELS } from '../../game/types';
 import type { GameSpeed } from '../../game/types';
 
-const speeds: GameSpeed[] = ['pause', '1x', '2x', '4x'];
+const speeds: GameSpeed[] = ['pause', '1x', '2x', '4x', '8x'];
 
 export const TopBar: React.FC = () => {
   const player = useGameStore(s => s.player);

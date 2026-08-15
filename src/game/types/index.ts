@@ -52,7 +52,7 @@ export type GameCommand =
   | { type: 'sendMessage'; from: string; title: string; body: string; description?: string };
 
 /** 游戏速度 */
-export type GameSpeed = 'pause' | '1x' | '2x' | '4x';
+export type GameSpeed = 'pause' | '1x' | '2x' | '4x' | '8x';
 
 /** 游戏阶段 */
 export type GamePhase = 'menu' | 'playing' | 'event' | 'gameOver' | 'victory';
@@ -491,10 +491,12 @@ export const SPEED_LABELS: Record<GameSpeed, string> = {
   '1x': '▶️ 1x',
   '2x': '⏩ 2x',
   '4x': '⏩⏩ 4x',
+  '8x': '🚀 8x',
 };
 
 export const SPEED_DAY_DURATION_MS: Record<Exclude<GameSpeed, 'pause'>, number> = {
   '1x': 30_000,
   '2x': 15_000,
   '4x': 7_500,
+  '8x': 3_750,
 };
