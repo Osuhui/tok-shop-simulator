@@ -17,6 +17,10 @@
 ## 设计 Design
 - [全流程内容设计 Content Design](design/Content_Design.md) — 办证(L0 开店 / L1 运营)/ 税务 / 竞争 / 员工等系统细节与故事化落地
 
+## 试玩 Playtest
+- [试玩心得与迭代记录](playtest/PLAYTEST_REPORT.md) — v2.0.0 玩家评测 + 开发侧优化迭代记录（落地进度 / 本会话变更 / 决策复盘）
+- [项目复盘 2026-08-14](retrospective/tokshop-retro-2026-08-14.html) — 本会话 5 提交工作复盘 + 项目整体状态
+
 ## 目录约定
 | 目录 | 用途 |
 |---|---|
@@ -24,3 +28,5 @@
 | `specs/` | 规格、设计文档、数据库 |
 | `plans/` | 执行 / 迭代计划 |
 | `design/` | 详细功能设计(内容 / 系统) |
+| `playtest/` | 试玩评测与开发侧迭代记录 |
+| `retrospective/` | 项目复盘 |

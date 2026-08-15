@@ -1,0 +1,290 @@
+<style>
+  :root {
+    --bg: #0e1014;
+    --surface: #161922;
+    --surface-2: #1d212c;
+    --text: #e7e9ef;
+    --dim: #9aa2b1;
+    --faint: #6b7280;
+    --accent: #a855f7;
+    --gold: #f5b301;
+    --success: #34d399;
+    --critical: #f87171;
+    --border: #262b36;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f6f7f9;
+      --surface: #ffffff;
+      --surface-2: #eef0f4;
+      --text: #161922;
+      --dim: #5b6472;
+      --faint: #939aa6;
+      --accent: #7c3aed;
+      --gold: #b45309;
+      --success: #059669;
+      --critical: #dc2626;
+      --border: #e2e5eb;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f6f7f9;
+    --surface: #ffffff;
+    --surface-2: #eef0f4;
+    --text: #161922;
+    --dim: #5b6472;
+    --faint: #939aa6;
+    --accent: #7c3aed;
+    --gold: #b45309;
+    --success: #059669;
+    --critical: #dc2626;
+    --border: #e2e5eb;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    font-size: 15px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 56px 24px 80px; }
+
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+    margin: 0 0 10px;
+  }
+  h1 {
+    font-size: 34px;
+    line-height: 1.15;
+    margin: 0 0 8px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  .lede { color: var(--dim); font-size: 16px; margin: 0 0 28px; }
+  h2 {
+    font-size: 21px;
+    font-weight: 750;
+    margin: 52px 0 6px;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  h2 + .sec-note { color: var(--faint); font-size: 13px; margin: 0 0 18px; }
+  h3 { font-size: 15px; margin: 22px 0 4px; font-weight: 700; }
+  p { margin: 10px 0; }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); }
+  a:hover { border-bottom-color: var(--accent); }
+
+  .tldr {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin: 26px 0 8px;
+  }
+  .tldr p { margin: 0; color: var(--dim); font-size: 14px; }
+  .tldr strong { color: var(--text); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin: 12px 0;
+  }
+  .row { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .hash { font-family: var(--mono); font-size: 12.5px; color: var(--gold); font-weight: 600; }
+  .ttl { font-weight: 700; font-size: 15px; }
+  .meta { color: var(--faint); font-size: 12.5px; font-family: var(--mono); }
+  .desc { color: var(--dim); font-size: 14px; margin: 6px 0 0; }
+
+  .pill {
+    display: inline-block;
+    font-size: 10.5px;
+    font-family: var(--mono);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    text-transform: uppercase;
+  }
+  .pill.feat { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+  .pill.refactor { color: var(--gold); border-color: color-mix(in srgb, var(--gold) 45%, transparent); }
+  .pill.chore { color: var(--dim); }
+  .pill.ok { color: var(--success); border-color: color-mix(in srgb, var(--success) 45%, transparent); }
+  .pill.risk { color: var(--critical); border-color: color-mix(in srgb, var(--critical) 45%, transparent); }
+
+  .timeline { border-left: 2px solid var(--border); margin: 18px 0 8px; padding-left: 20px; }
+  .tl-item { position: relative; margin: 0 0 18px; }
+  .tl-item::before {
+    content: "";
+    position: absolute;
+    left: -27px; top: 6px;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 3px var(--bg);
+  }
+  .tl-date { font-family: var(--mono); font-size: 12px; color: var(--faint); }
+  .tl-title { font-weight: 700; font-size: 14.5px; }
+
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13.5px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--faint); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--gold); white-space: nowrap; }
+
+  ul { margin: 10px 0; padding-left: 20px; }
+  li { margin: 6px 0; }
+  code { font-family: var(--mono); font-size: 12.5px; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; color: var(--text); }
+
+  .note {
+    background: var(--surface-2);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin: 14px 0;
+    font-size: 13.5px;
+    color: var(--dim);
+  }
+  .note b { color: var(--text); }
+
+  footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--faint); font-size: 12.5px; }
+  .kbd { font-family: var(--mono); font-size: 11.5px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; }
+</style>
+
+<div class="wrap">
+
+  <p class="eyebrow">TokShop Simulator · 工程复盘</p>
+  <h1>项目复盘 — 2026-08-14</h1>
+  <p class="lede">跨境 TikTok 小店经营模拟器。本会话 5 个提交的工作复盘，叠加项目截至今日的整体状态。</p>
+
+  <div class="tldr">
+    <p><strong>一句话：</strong>本会话把此前全部代码（架构骨架 → 八大内容系统 → 试玩迭代 → 平衡大修）首次提交并推送到 GitHub，补齐了新手引导浮层与 8x 倍速两个 P1 体验项，并通过一次双轴 code-review 把引导步骤的重复定义收敛成共享常量。质量闸门全绿：<strong>tsc strict 通过、49 项 Vitest 全过</strong>。当前游戏在平衡大修后 <strong>27/27 局可通关、0 破产</strong>。</p>
+  </div>
+
+  <h2>一、本会话做了什么</h2>
+  <p class="sec-note">5 个提交，均已在 <code>main</code> 推送到 origin。</p>
+
+  <div class="card">
+    <div class="row"><span class="pill chore">chore</span><span class="hash">1843915</span><span class="ttl">Initial commit — 工作基线</span></div>
+    <p class="desc">把此前四轮工作（Sprint0 架构骨架 / Sprint1 八大系统+剧情 / 试玩迭代1 / 平衡大修）作为初始提交推上 <a href="https://github.com/Osuhui/tok-shop-simulator">GitHub 远程仓库</a>。本地此前并非 git 仓库，本会话完成 init → commit → push。</p>
+  </div>
+
+  <div class="card">
+    <div class="row"><span class="pill chore">chore</span><span class="hash">bfd1a61</span><span class="ttl">忽略本地设置 + 归一化换行符</span></div>
+    <p class="desc">`.gitignore` 追加 <code>.claude/settings.local.json</code> 与 <code>sim_*.txt / sim_*.log</code>（模拟产物，随平衡参数过期重生）；新增 <code>.gitattributes</code> 用 <code>* text=auto eol=lf</code> 统一 LF，消除 Windows/Unix 跨平台 CRLF 警告。clean commit，无内容改动。</p>
+  </div>
+
+  <div class="card">
+    <div class="row"><span class="pill feat">feat</span><span class="hash">fc0e9ec</span><span class="ttl">新手引导增强 — 首次浮层 + 完成奖励</span></div>
+    <p class="desc">新增 <code>OnboardingModal</code> 首次进入浮层（<code>uiStore.onboardingSeen</code> 经 localStorage 记忆）；在 <code>advanceOneDay</code> 中，玩家完成「有货 / 有单 / 发过货 / Lv.2」四步且未发奖时一次性 <code>+$500</code> 启动资金（<code>onboardingRewardClaimed</code> 设为可选字段，避免破坏旧存档与测试夹具）。</p>
+  </div>
+
+  <div class="card">
+    <div class="row"><span class="pill feat">feat</span><span class="hash">5aaf4ce</span><span class="ttl">新增 8x 倍速档位（P1-2 快进/倍速）</span></div>
+    <p class="desc">把 <code>GameSpeed</code> 扩展为 <code>'pause'|'1x'|'2x'|'4x'|'8x'</code>，<code>SPEED_LABELS</code> 与 <code>SPEED_DAY_DURATION_MS</code> 补 <code>8x → 3750ms/天</code>，<code>TopBar</code> 速度组补 8x 按钮。3750ms 对齐《PLAYTEST_REPORT》P1-2 建议的「约 3.75s/天」。</p>
+  </div>
+
+  <div class="card">
+    <div class="row"><span class="pill refactor">refactor</span><span class="hash">5115cb8</span><span class="ttl">抽取共享 ONBOARDING_STEPS 常量</span></div>
+    <p class="desc">新建 <code>src/components/onboardingSteps.ts</code>，统一定义新手引导 4 步（<code>id/icon/title/desc/panel</code>）；<code>DashboardPanel</code> 清单与 <code>OnboardingModal</code> 浮层复用，消除两处重复硬编码文案。这是 code-review 中 Standards 轴发现的 Duplicated Code 的修复。</p>
+  </div>
+
+  <h2>二、项目整体状态</h2>
+  <p class="sec-note">截至本会话前，项目已完成四个里程碑。</p>
+
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-date">Sprint 0</div>
+      <div class="tl-title">架构骨架 + 架构级 BUG 修复</div>
+      <p class="desc" style="margin:4px 0 0;color:var(--dim);font-size:13.5px">落地三层架构：logic（<code>src/game/</code> 纯函数）/ state（<code>src/stores/</code> Zustand 薄壳）/ render（<code>src/components/</code> 只订阅）。核心三件套 <code>DayProcessor</code> 注册表 + <code>EffectBus</code> 指令总线 + <code>StoryEngine</code> 剧情链。修 BUG #1/#2/#5/#6（升级无 onClick、事件冷却永久黑名单、订单号用 <code>Date.now()</code>、暂停期可误操作）。</p>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">Sprint 1</div>
+      <div class="tl-title">八大内容系统 + 剧情链</div>
+      <p class="desc" style="margin:4px 0 0;color:var(--dim);font-size:13.5px">以「纯 <code>XProcessor: DayProcessor</code> + 数据文件」形式落地：税务 / 竞争AI / 员工 / 营销 / 物流承运商 / 贷款现金流 / 评价复购 / 选品趋势。剧情新增税务稽查链 + 三条身份专属链（按 <code>identityId</code> 门控）。38 项测试全绿。</p>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">试玩迭代 1</div>
+      <div class="tl-title">补齐开局设置 / 目标通关 / 新手引导</div>
+      <p class="desc" style="margin:4px 0 0;color:var(--dim);font-size:13.5px">资深玩家打分：目标感 3→8、新手引导 5→8、难度平衡 4→7、内容剧情 6→8。关键修复：身份/难度/地区选择此前建好却从未接 UI（导致 2/3 剧情链死链、难度形同虚设、税务因 SEA 免税而隐身）。</p>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">平衡大修（本会话前最近）</div>
+      <div class="tl-title">9/9 破产 → 27/27 通关</div>
+      <p class="desc" style="margin:4px 0 0;color:var(--dim);font-size:13.5px">修三处根因（采购合并覆盖到货日 / 逾期罚息 10% 复利 / 达人爆单无履约上限）+ sim 机器人策略缺陷，目标数值重标定。难度阶梯：easy D41–72 / normal D79–137 / hard D130–160（目标天数 365/365/300）。49 项测试全绿。</p>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>当前能力清单：</b>开张办证（L0/L1 全类别）、税务申报与稽查、竞争 AI 压制、员工雇佣与发薪、四类营销、物流承运商与旺季、极速/银行双贷与罚息、评价复购、选品季节趋势、身份（创业者/老兵/学生）× 难度（简单/普通/困难）、剧情链、3D 办公室场景、IndexedDB 存档、Capacitor 移动端封装。
+  </div>
+
+  <h2>三、关键决策复盘</h2>
+  <p class="sec-note">几个「为什么这么做」而非「怎么做」的判断点。</p>
+
+  <h3>① 引导第 2 步用「获得订单」而非 spec 的「上架开张」</h3>
+  <p>《PLAYTEST_REPORT》P1-1 原文第 2 步是「上架开张」，但实现换成「获得第一笔订单」。这是<b>有意偏差</b>：初始库存默认 <code>isListed=true</code>（开局即可售），若单独列「上架」步骤会开局即完成、失去引导意义；故以「获得首单」作为更关键且可检测的早期目标（发货、升级都依赖先有订单）。已在 <code>onboardingSteps.ts</code> 顶部注释固化这一取舍。</p>
+
+  <h3>② 8x = 3750ms/天，而非更快</h3>
+  <p>没有盲目往上加 16x。spec P1-2 明确建议「约 3.75s/天」，8x 正好落在 30s→15s→7.5s→3.75s 的等比序列末端，节奏连续、不突兀。更快档位会让玩家来不及读每日结算弹窗，体验收益递减。</p>
+
+  <h3>③ $500 奖励字段设为「可选」而非「必填」</h3>
+  <p>最初加 <code>onboardingRewardClaimed: boolean</code> 为必填，立刻触发三处 TS 错误（测试夹具、存档序列化、旧存档）。改为可选 <code>?: boolean</code>，<code>!undefined === true</code> 天然兼容「未发奖」语义，旧存档与测试零改动即过。这是「让字段缺省即安全」的小取舍。</p>
+
+  <h3>④ 换行符用 .gitattributes 而非手动转换</h3>
+  <p>本机 Windows 产生 CRLF 警告。没有逐文件转换（易引入噪声 diff），而是用 <code>* text=auto eol=lf</code> 让 Git 在 checkout 时归一，clean commit、无内容变化。</p>
+
+  <h2>四、质量与风险</h2>
+  <p class="sec-note">验证闸门与本会话暴露/闭环的问题。</p>
+
+  <table>
+    <thead><tr><th>维度</th><th>结果</th></tr></thead>
+    <tbody>
+      <tr><td>类型检查（tsc strict）</td><td class="num">通过</td></tr>
+      <tr><td>单元测试（Vitest）</td><td class="num">49 / 49 通过</td></tr>
+      <tr><td>生产构建（build）</td><td class="num">通过</td></tr>
+      <tr><td>平衡模拟（UK 9 配置 × 3 局）</td><td class="num">27 / 27 victory</td></tr>
+    </tbody>
+  </table>
+
+  <h3>code-review 双轴闭环</h3>
+  <p>以初始提交 <code>1843915</code> 为固定点，对本会话 4 个功能/重构提交做 Standards + Spec 双轴审查：</p>
+  <ul>
+    <li><span class="pill risk">Standards</span> 1 个 judgement call — <b>Duplicated Code</b>：引导 4 步在两组件重复硬编码。→ <b>已修</b>（5115cb8 抽共享常量）。</li>
+    <li><span class="pill ok">Spec</span> 2 处偏离 — (a) 引导步骤缺「上架」（<b>有意偏差，已注释</b>）；(b) P1-1 建议复用 TaskSystem，实现走 uiStore + advanceOneDay 直连（<b>行为达标、路径偏离，无回归</b>）。</li>
+    <li>无范围蔓延、无错误实现；8x 速度数值与 spec 一致。</li>
+  </ul>
+
+  <h3>已知风险</h3>
+  <ul>
+    <li><b>hard 难度仍偏紧：</b>平衡大修后 hard 目标天数 D130–160、初始资金偏紧，资深玩家体感「清算线不友好」。这是下个值得校准的点，本次未动。</li>
+    <li><b>试玩报告未更新：</b>《PLAYTEST_REPORT》尚未记录本会话的 8x 速度、+$500 奖励、引导重构，存在文档漂移。</li>
+    <li><b>移动端未验证：</b>Capacitor 封装已就位，但本会话未做真机/模拟器跑测。</li>
+  </ul>
+
+  <h2>五、下一步建议</h2>
+  <ul>
+    <li><b>困难难度校准</b>（高优先）— 放宽 hard 初始资金 / 清算阈值，或把目标天数从 300 上调，让 hard 从「极限生存」回到「可达成挑战」。</li>
+    <li><b>文档补完</b> — 把 8x、+$500、引导重构补进《PLAYTEST_REPORT》或新增一份 changelog，消除上面提到的漂移。</li>
+    <li><b>移动端冒烟</b> — 跑一次 Capacitor Android 构建，确认 3D 场景与触摸交互在真机可用。</li>
+    <li><b>可选内容</b> — 更多区域（已支持 SEA/UK/US 三区切换）、更多身份/难度剧情链、成就系统。</li>
+  </ul>
+
+  <footer>
+    <p>仓库：<a href="https://github.com/Osuhui/tok-shop-simulator">github.com/Osuhui/tok-shop-simulator</a> · 分支 <span class="kbd">main</span> · 末提交 <span class="kbd">5115cb8</span></p>
+    <p>本复盘由会话工作记录与项目记忆档案汇总而成，数据为截至 2026-08-14 的真实提交与测试结果。</p>
+  </footer>
+
+</div>
