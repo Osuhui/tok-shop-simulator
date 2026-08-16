@@ -16,12 +16,25 @@ import { takeLoan, repayLoan } from './systems/LoanSystem';
 import { hireEmployee } from './systems/EmployeeSystem';
 import { fileTax } from './systems/TaxSystem';
 import { getUpgradeRequirement, canUpgrade, applyUpgrade } from './systems/ShopSystem';
+import { getRequiredCertIds, isShopOpen } from './systems/OpeningSystem';
+import { startCertificateApplication } from './systems/TaskSystem';
+import { CERT_DEFINITION_MAP } from './data/certificates';
 import type { GameState, IdentityId, DifficultyId, RegionId, GameEvent, EventChoice } from './types';
 
 const REGION: RegionId = 'UK';
 
 function playerAct(state: GameState, day: number): GameState {
   let s = state;
+  // 0) 办证：难度要求的开业证件缺一即申请（并行办理，到期待审自动激活）
+  for (const certId of getRequiredCertIds(s.difficultyId)) {
+    const existing = s.certificates.find((c) => c.id === certId);
+    if (!existing || existing.status === 'none') {
+      if (s.player.gold >= CERT_DEFINITION_MAP[certId].cost) {
+        const { state: next } = startCertificateApplication(s, certId);
+        s = next;
+      }
+    }
+  }
   // 1) 发货：把所有有库存的待发货订单发出
   for (const o of s.orders) {
     if (o.status === 'pending') {
@@ -66,15 +79,17 @@ function playerAct(state: GameState, day: number): GameState {
       }
     }
   }
-  // 2.5) 上架：模拟玩家将新到货/新采购的库存上架，自然流量才会认它
-  s = {
-    ...s,
-    inventory: s.inventory.map(i =>
-      i.isListed ? i : { ...i, isListed: true, listedTitle: getProduct(i.productId)?.name ?? i.productId },
-    ),
-  };
+  // 2.5) 上架：开业后将新到货/新采购的库存上架，自然流量才会认它
+  if (isShopOpen(s)) {
+    s = {
+      ...s,
+      inventory: s.inventory.map(i =>
+        i.isListed ? i : { ...i, isListed: true, listedTitle: getProduct(i.productId)?.name ?? i.productId },
+      ),
+    };
+  }
   // 3) 达人合作（每15天）：在"库存接得住"的达人中挑预估单量最大的（囤货接大单）
-  if (day % 15 === 0) {
+  if (isShopOpen(s) && day % 15 === 0) {
     const prod = getProduct('prod_stanup_cup')!;
     const stock = s.inventory.find((i) => i.productId === prod.id && i.warehouseType === 'self')?.quantity ?? 0;
     const avail = INFLUENCERS.filter(

@@ -198,3 +198,16 @@
 - 单元测试 Vitest：**49 / 49 通过**（含平衡模拟与 +$500 不破坏通关断言）
 - 生产构建：通过
 - 平衡模拟（UK 9 配置 × 3 局）：**27 / 27 victory、0 破产**
+
+### 难度死配置全量兑现（2026-08-16）
+
+此前登记的技术债——`difficulties` 的 `blockOpening` / `requiredBeforeOpening` / `gracePeriodDays` / `penaltyMultiplier` 四字段定义在类型与配置中却从未接进游戏逻辑——本轮**全量兑现**（而非删除），并补上了办证 UI 缺口：
+
+- **开业封锁**（`OpeningSystem` 纯派生，零新存档字段）：`required = blockOpening ? ALL_L0 : requiredBeforeOpening`。easy 直接开业；normal 需 SELLER_VERIFY + RECEIVING_ACCOUNT 两证；hard 需全部 4 张 L0 证。未开业时：自然流量为零（`generateOrganicOrders`）、上架被拒（`checkAndListProduct`）、达人合作被拒（`initiateAffiliate`）；初始库存仅 easy 默认上架。
+- **罚息/宽限接线**（`loanProcessor`）：逾期判定 `day > dueDay + gracePeriodDays`，日罚息 = 本金 3% × `penaltyMultiplier`（easy 14 天/0.7×，normal 7 天/1.0×，hard 0 天/1.3×）；150% 封顶保留。
+- **办证 UI 从零补齐**：此前全组件目录无任何证件 UI，`startCertificateApplication` 只被测试调用。新增 `CompliancePanel`（开业进度 + 10 证目录 + 申请）+ `applyCertificate` store action（扣办理费、防重复申请）+ BottomNav 入口/红点 + DashboardPanel「筹备开业」卡 + ListingPanel 未开业横幅 + 开局欢迎通知按难度提示。
+- **`startCertificateApplication` 加固**：签名改 `{ state, error }`，办理时扣 `cost`（此前 cost 字段从不扣费），并防重复申请覆盖 grantedDay。
+- **sim 机器人学会办证**：两个 sim 的玩家策略补「缺证即申请」步骤，上架/达人合作在开业后执行；`balance.sim` 的初始状态同步按难度置 `isListed`。
+- **文档同步**：Content_Design 7.2 hard `startGoldMultiplier` 0.8→0.9 并标注 2026-08-15 校准、7.3 伪代码标注已实现；MainMenu hard 文案「资金×0.8」→「资金×0.9」。
+
+**验证**：tsc strict ✅ / Vitest **69/69** ✅（新增 OpeningSystem、LoanSystem 罚息宽限、TaskSystem 扣费防重、开业封锁与 store 集成用例）/ 生产构建 ✅ / 平衡模拟 **27/27 victory、0 破产**，梯度保持——easy D43-77 / normal D67-130 / hard D88-157（hard 最慢局距 330 天上限余量 170+ 天，开业封锁的平衡冲击远小于预估：L0 四证总成本仅 $300、最慢 5 天办结）。

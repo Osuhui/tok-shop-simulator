@@ -25,6 +25,8 @@ import { repayLoan } from './systems/LoanSystem';
 import { fileTax } from './systems/TaxSystem';
 import { calculatePurchaseCost } from './engine/formulas';
 import { getUpgradeRequirement, canUpgrade, applyUpgrade as applyUpgradeState } from './systems/ShopSystem';
+import { getRequiredCertIds, isShopOpen } from './systems/OpeningSystem';
+import { startCertificateApplication } from './systems/TaskSystem';
 
 // ---- 初始状态构造（复制 gameStore.generateInitialState 核心） ----
 function buildInitialState(opts: { identityId?: any; difficultyId?: any; region?: any } = {}): GameState {
@@ -62,12 +64,15 @@ function buildInitialState(opts: { identityId?: any; difficultyId?: any; region?
     player.gold += identity.loan.amount;
   }
 
+  // 开业封锁：与 gameStore.generateInitialState 一致——有开业证件要求的难度初始库存不上架
+  const initiallyListed = getRequiredCertIds(difficultyId).length === 0;
+
   return {
     player,
     inventory: [
-      { productId: 'prod_stanup_cup', quantity: 30, inboundQuantity: 0, warehouseType: 'self' as const },
-      { productId: 'prod_novelty_snacks', quantity: 50, inboundQuantity: 0, warehouseType: 'self' as const },
-      { productId: 'prod_resistance_bands', quantity: 20, inboundQuantity: 0, warehouseType: 'self' as const },
+      { productId: 'prod_stanup_cup', quantity: 30, inboundQuantity: 0, warehouseType: 'self' as const, isListed: initiallyListed },
+      { productId: 'prod_novelty_snacks', quantity: 50, inboundQuantity: 0, warehouseType: 'self' as const, isListed: initiallyListed },
+      { productId: 'prod_resistance_bands', quantity: 20, inboundQuantity: 0, warehouseType: 'self' as const, isListed: initiallyListed },
     ],
     orders: [],
     influencers: [...INFLUENCERS],
@@ -145,6 +150,17 @@ function simulate(opts: { identityId?: any; difficultyId?: any; region?: any; us
 
   for (let day = state.player.day; day <= maxDays; day++) {
     // --- 玩家当日操作（runDay 之前） ---
+    // 0. 办证：难度要求的开业证件缺一即申请（并行办理，到期待审自动激活）
+    for (const certId of getRequiredCertIds(state.difficultyId)) {
+      const existing = state.certificates.find((c) => c.id === certId);
+      if (!existing || existing.status === 'none') {
+        if (state.player.gold >= CERT_DEFINITION_MAP[certId].cost) {
+          const { state: next } = startCertificateApplication(state, certId);
+          state = next;
+        }
+      }
+    }
+
     // 1. 发货：所有 pending 订单
     for (const o of state.orders) {
       if (o.status === 'pending') {
@@ -179,16 +195,18 @@ function simulate(opts: { identityId?: any; difficultyId?: any; region?: any; us
       }
     }
 
-    // 2.5 上架：模拟玩家将（新到货的）库存上架，自然流量才会认它
-    state = {
-      ...state,
-      inventory: state.inventory.map(i =>
-        i.isListed ? i : { ...i, isListed: true, listedTitle: getProduct(i.productId)?.name ?? i.productId },
-      ),
-    };
+    // 2.5 上架：开业后将（新到货的）库存上架，自然流量才会认它
+    if (isShopOpen(state)) {
+      state = {
+        ...state,
+        inventory: state.inventory.map(i =>
+          i.isListed ? i : { ...i, isListed: true, listedTitle: getProduct(i.productId)?.name ?? i.productId },
+        ),
+      };
+    }
 
     // 3. 达人合作（可选）：仅当某主力品库存足以接住预估订单量
-    if (opts.useAffiliates) {
+    if (isShopOpen(state) && opts.useAffiliates) {
       const avail = state.influencers.filter(i => i.status === 'available' && i.region === state.player.currentRegion);
       if (avail.length && state.player.gold > 4000) {
         // 选一个预估订单量 <= 某主力品库存 的达人
