@@ -31,7 +31,7 @@ describe('整局模拟 Integration', () => {
       if (day === 5) state = startCampaign(state, 'ads', 200, day).state;
       if (day === 12) state = hireEmployee(state, 'packer', day).state;
       if (day === 18) state = takeLoan(state, 'payday', day).state;
-      if (day === 22) state = startCertificateApplication(state, 'VAT');
+      if (day === 22) state = startCertificateApplication(state, 'VAT').state;
       if (day === 45) state = fileTax(state, day);
 
       const ctx = runDay(state, day);

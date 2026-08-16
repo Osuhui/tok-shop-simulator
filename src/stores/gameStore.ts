@@ -11,6 +11,7 @@ import type {
   DifficultyId,
   ProductCategory,
   Certificate,
+  CertId,
   Loan,
   LoanType,
   EmployeeRole,
@@ -30,6 +31,7 @@ import { createInitialTax } from '../game/systems/TaxSystem';
 import { createInitialCompetitors } from '../game/systems/CompetitionSystem';
 import { createInitialEmployees, hireEmployee as hireEmployeeFn } from '../game/systems/EmployeeSystem';
 import { fileTax as fileTaxFn } from '../game/systems/TaxSystem';
+import { startCertificateApplication } from '../game/systems/TaskSystem';
 import { takeLoan as takeLoanFn, repayLoan as repayLoanFn } from '../game/systems/LoanSystem';
 import { startCampaign as startCampaignFn } from '../game/systems/MarketingSystem';
 import { selectCarrier as selectCarrierFn, shippingMultiplier } from '../game/systems/CarriersSystem';
@@ -46,6 +48,7 @@ import { tryTriggerEvent, driveChainEvent, resolveEventChoice } from '../game/en
 import { applyCommands } from '../game/engine/EffectBus';
 import { runDay } from '../game/engine/DayProcessor';
 import { nextCooldownDay } from '../game/engine/StoryEngine';
+import { isShopOpen, getRequiredCertIds } from '../game/systems/OpeningSystem';
 import { fxBus } from '../game/fxBus';
 import type { GameEvent } from '../game/types';
 
@@ -91,6 +94,9 @@ interface GameStore extends GameState {
 
   // 员工
   hireEmployee: (role: EmployeeRole) => { success: boolean; message: string };
+
+  // 证件 / 开业
+  applyCertificate: (certId: CertId) => { success: boolean; message: string };
 
   // 营销
   startCampaign: (type: CampaignType, spend: number) => { success: boolean; message: string };
@@ -165,12 +171,15 @@ function generateInitialState(opts: NewGameOptions = {}): GameState {
     player.gold += identity.loan.amount;
   }
 
+  // 开业封锁：easy（无开业证件要求）初始库存默认已上架；normal/hard 需先办证开业后再上架
+  const initiallyListed = getRequiredCertIds(difficultyId).length === 0;
+
   return {
     player,
     inventory: [
-      { productId: 'prod_stanup_cup', quantity: 30, inboundQuantity: 0, warehouseType: 'self', isListed: true },
-      { productId: 'prod_novelty_snacks', quantity: 50, inboundQuantity: 0, warehouseType: 'self', isListed: true },
-      { productId: 'prod_resistance_bands', quantity: 20, inboundQuantity: 0, warehouseType: 'self', isListed: true },
+      { productId: 'prod_stanup_cup', quantity: 30, inboundQuantity: 0, warehouseType: 'self', isListed: initiallyListed },
+      { productId: 'prod_novelty_snacks', quantity: 50, inboundQuantity: 0, warehouseType: 'self', isListed: initiallyListed },
+      { productId: 'prod_resistance_bands', quantity: 20, inboundQuantity: 0, warehouseType: 'self', isListed: initiallyListed },
     ],
     orders: [],
     influencers: [...INFLUENCERS_DATA],
@@ -220,7 +229,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     state.notifications = [{
       id: 'welcome',
       title: `欢迎，${identity.name}！`,
-      message: `你以「${identity.name}」的身份从${region.name}市场起步。初始资金 $${state.player.gold.toLocaleString()}，仓库中有一些初始库存。打开"选品"采购商品，在"上架"中编辑标题，等待订单后去"物流"发货！`,
+      message: `你以「${identity.name}」的身份从${region.name}市场起步。初始资金 $${state.player.gold.toLocaleString()}，仓库中有一些初始库存。${
+        getRequiredCertIds(state.difficultyId).length > 0
+          ? '当前难度需要先到「办证」办齐开业证件，开业后才能上架接单！'
+          : '打开"选品"采购商品，在"上架"中编辑标题，等待订单后去"物流"发货！'
+      }`,
       type: 'info',
       timestamp: Date.now(),
       read: false,
@@ -320,6 +333,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const store = get();
     const product = getProduct(productId);
     if (!product) return { passed: false, violations: [], penaltyLevel: 'none' };
+    // 开业封锁：未办齐开业证件不可上架
+    if (!isShopOpen(store)) {
+      return { passed: false, violations: ['未开业：请先在「办证」中办齐全部开业证件'], penaltyLevel: 'none' };
+    }
 
     const result = ListingSystem.checkCompliance(title, product, store.player.currentRegion);
 
@@ -359,6 +376,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const product = getProduct(productId);
     if (!influencer || !product) return { success: false, message: '达人或商品不存在', ordersCount: 0 };
     if (influencer.status === 'poached') return { success: false, message: `${influencer.name} 已被竞争对手挖角，无法合作`, ordersCount: 0 };
+    // 开业封锁：未开业的店铺不能承接达人合作（达人自带流量但店铺需先能履约）
+    if (!isShopOpen(store)) return { success: false, message: '店铺尚未开业，暂不能发起达人合作', ordersCount: 0 };
 
     const result = AffiliateSystem.initiateCooperation(influencer, product, commission, store);
 
@@ -536,6 +555,23 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ employees: next.employees, player: next.player });
     get().addNotification('招募员工', `已招募员工，支付首月薪资 $${cost}`, 'success');
     return { success: true, message: `招募成功，支出 $${cost}` };
+  },
+
+  // === 证件 / 开业 ===
+  applyCertificate: (certId) => {
+    const store = get();
+    if (store.gamePhase !== 'playing') return { success: false, message: '当前不可操作' };
+    const { state: next, error } = startCertificateApplication(store, certId);
+    if (error) return { success: false, message: error };
+    const def = CERT_DEFINITION_MAP[certId];
+    const cost = Math.round((store.player.gold - next.player.gold) * 100) / 100;
+    set({ certificates: next.certificates, player: next.player });
+    get().addNotification(
+      '证件申请',
+      `已提交「${def.name}」申请，预计 Day ${next.certificates.find((c) => c.id === certId)?.grantedDay} 下发${cost > 0 ? `，办理费 $${cost}` : ''}`,
+      'success',
+    );
+    return { success: true, message: `已申请 ${def.name}` };
   },
 
   // === 营销 ===

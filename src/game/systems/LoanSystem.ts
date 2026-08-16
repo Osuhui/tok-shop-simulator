@@ -3,6 +3,7 @@
 // ============================================================
 import type { GameState, Loan, LoanType } from '../types';
 import type { DayProcessor } from '../engine/DayProcessor';
+import { gracePeriodDays, penaltyMultiplier } from './OpeningSystem';
 
 interface LoanProduct {
   type: LoanType;
@@ -74,9 +75,12 @@ export function repayLoan(state: GameState, loanId: string): { state: GameState;
   };
 }
 
-/** 每日检查：逾期贷款产生罚息并扣健康分（罚息封顶为本金 150%，到顶后冻结，避免复利死亡螺旋） */
+/** 每日检查：逾期贷款产生罚息并扣健康分（罚息封顶为本金 150%，到顶后冻结，避免复利死亡螺旋）。
+ *  难度接线：宽限期 gracePeriodDays 内不算逾期；日罚息 = 本金 3% × penaltyMultiplier。 */
 export const loanProcessor: DayProcessor = (ctx) => {
-  const overdue = ctx.state.loans.filter((l) => ctx.day > l.dueDay);
+  const grace = gracePeriodDays(ctx.state);
+  const penaltyMult = penaltyMultiplier(ctx.state);
+  const overdue = ctx.state.loans.filter((l) => ctx.day > l.dueDay + grace);
   if (overdue.length === 0) return ctx;
   let state = ctx.state;
   for (const loan of overdue) {
@@ -84,7 +88,7 @@ export const loanProcessor: DayProcessor = (ctx) => {
     const penalty =
       loan.repayAmount >= cap
         ? 0 // 已到封顶：债务冻结，仅健康分持续下滑
-        : Math.min(Math.round(loan.principal * 0.03), cap - loan.repayAmount);
+        : Math.min(Math.round(loan.principal * 0.03 * penaltyMult), cap - loan.repayAmount);
     state = {
       ...state,
       loans: state.loans.map((l) =>

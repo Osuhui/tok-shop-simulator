@@ -3,7 +3,7 @@
 // ============================================================
 import type { DifficultyConfig } from '../types';
 
-const ALL_L0 = ['SELLER_VERIFY', 'BUSINESS_LICENSE', 'RECEIVING_ACCOUNT', 'CUSTOMS_REG'] as const;
+export const ALL_L0 = ['SELLER_VERIFY', 'BUSINESS_LICENSE', 'RECEIVING_ACCOUNT', 'CUSTOMS_REG'] as const;
 
 export const DIFFICULTIES: Record<string, DifficultyConfig> = {
   easy: {

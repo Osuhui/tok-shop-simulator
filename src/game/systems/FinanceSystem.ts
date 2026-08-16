@@ -6,6 +6,7 @@ import { calculatePlatformFee, calculateDailyOperatingCost } from '../engine/for
 import { getRegionConfig } from '../data/regions';
 import { getProduct } from '../data/products';
 import { seasonForDay } from '../data/seasonConfig';
+import { isShopOpen } from './OpeningSystem';
 
 export interface DailyFinanceReport {
   day: number;
@@ -104,6 +105,8 @@ export const FinanceSystem = {
 
   /** 自然流量生成订单 */
   generateOrganicOrders(state: GameState, day: number): Order[] {
+    // 开业封锁：未办齐开业证件的店铺不产生自然流量（达人订单在 store 层同样被 gate）
+    if (!isShopOpen(state)) return [];
     const region = getRegionConfig(state.player.currentRegion);
     const pressure = state.competitionPressure ?? 1;
     const opsBoost = 1 + 0.25 * state.employees.filter((e) => e.role === 'ops').length + 0.2 * state.campaigns.filter((c) => c.type === 'seo').length;

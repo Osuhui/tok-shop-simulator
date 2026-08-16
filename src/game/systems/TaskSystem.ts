@@ -7,10 +7,23 @@ import type { CertId, Certificate, GameState } from '../types';
 import type { DayProcessor } from '../engine/DayProcessor';
 import { CERT_DEFINITION_MAP } from '../data/certificates';
 
-/** 发起证件申请：覆盖同名记录，置为 applying，并计算预计下发日 */
-export function startCertificateApplication(state: GameState, certId: CertId): GameState {
+/** 发起证件申请：扣办理费、置为 applying，并计算预计下发日。
+ *  - 证件不存在 / 办理中或已持有 / 资金不足 → error（同 takeLoan 的 { state, error } 惯例）
+ *  - 防重复申请：旧实现会覆盖 applying 记录并重置 grantedDay，等同免费延期 */
+export function startCertificateApplication(
+  state: GameState,
+  certId: CertId,
+): { state: GameState; error?: string } {
   const def = CERT_DEFINITION_MAP[certId];
-  if (!def) return state;
+  if (!def) return { state, error: '证件不存在' };
+
+  const existing = state.certificates.find((c) => c.id === certId);
+  if (existing && (existing.status === 'applying' || existing.status === 'active')) {
+    return { state, error: '该证件办理中或已持有' };
+  }
+  if (state.player.gold < def.cost) {
+    return { state, error: '资金不足' };
+  }
 
   const appliedDay = state.player.day;
   const grantedDay = appliedDay + def.leadTimeDays;
@@ -29,7 +42,16 @@ export function startCertificateApplication(state: GameState, certId: CertId): G
   };
 
   const others = state.certificates.filter((c) => c.id !== certId);
-  return { ...state, certificates: [...others, cert] };
+  return {
+    state: {
+      ...state,
+      certificates: [...others, cert],
+      player: {
+        ...state.player,
+        gold: Math.round((state.player.gold - def.cost) * 100) / 100,
+      },
+    },
+  };
 }
 
 /** 每日推进证件：到期待审的 applying -> active（可挂到 DayProcessor 注册表） */
