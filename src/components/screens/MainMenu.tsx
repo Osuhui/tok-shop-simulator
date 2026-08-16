@@ -15,7 +15,7 @@ const IDENTITY_CARDS: Record<string, { icon: string; color: string; tags: string
 const DIFFICULTY_OPTS: { id: DifficultyId; label: string; desc: string; icon: string }[] = [
   { id: 'easy', label: '轻松', desc: '先开业后补证 · 资金×1.3', icon: '🌱' },
   { id: 'normal', label: '标准', desc: '核心证件必须 · 资金×1.0', icon: '⚖️' },
-  { id: 'hard', label: '硬核', desc: '全证才能开业 · 资金×0.8', icon: '🔥' },
+  { id: 'hard', label: '硬核', desc: '全证才能开业 · 资金×0.9', icon: '🔥' },
 ];
 
 const REGION_OPTS: { id: RegionId; name: string; desc: string; icon: string }[] = [

@@ -2,11 +2,14 @@ import React, { useState } from 'react';
 import { Panel } from '../ui/Panel';
 import { Button } from '../ui/Button';
 import { useGameStore } from '../../stores/gameStore';
+import { isShopOpen, getMissingCerts } from '../../game/systems/OpeningSystem';
+import { CERT_DEFINITION_MAP } from '../../game/data/certificates';
 
 interface Props { onClose: () => void }
 
 export const ListingPanel: React.FC<Props> = ({ onClose }) => {
   const inventory = useGameStore(s => s.inventory);
+  const certificates = useGameStore(s => s.certificates);
   const checkAndListProduct = useGameStore(s => s.checkAndListProduct);
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [title, setTitle] = useState('');
@@ -17,6 +20,9 @@ export const ListingPanel: React.FC<Props> = ({ onClose }) => {
   } | null>(null);
 
   const inStockItems = inventory.filter(i => (i.isListed ?? false) || i.quantity > 0 || i.inboundQuantity > 0);
+  const latest = { ...useGameStore.getState(), certificates };
+  const shopOpen = isShopOpen(latest);
+  const missingCerts = getMissingCerts(latest);
 
   const handleCheck = () => {
     if (!selectedItem || !title.trim()) return;
@@ -30,6 +36,16 @@ export const ListingPanel: React.FC<Props> = ({ onClose }) => {
 
   return (
     <Panel title="📝 商品上架" onClose={onClose}>
+      {/* 未开业横幅：办齐开业证件前不可上架 */}
+      {!shopOpen && missingCerts.length > 0 && (
+        <div className="rounded-lg border border-rose-700 bg-rose-500/10 p-4 mb-4">
+          <p className="text-sm font-bold text-rose-400">🔒 店铺尚未开业</p>
+          <p className="text-xs text-slate-400 mt-1">
+            请先到「办证」办齐：{missingCerts.map(id => CERT_DEFINITION_MAP[id].name).join('、')}
+            ，开业后方可上架商品。
+          </p>
+        </div>
+      )}
       {inStockItems.length === 0 ? (
         <p className="text-slate-500 text-sm text-center py-8">
           暂无库存商品。请先在"选品"中采购商品。

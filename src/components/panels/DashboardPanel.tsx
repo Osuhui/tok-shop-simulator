@@ -1,6 +1,7 @@
 import React from 'react';
 import { Panel } from '../ui/Panel';
 import { ProgressBar } from '../ui/ProgressBar';
+import { Button } from '../ui/Button';
 import { useGameStore } from '../../stores/gameStore';
 import { ONBOARDING_STEPS } from '../onboardingSteps';
 import { formatGold, formatDay, formatNumber } from '../../utils/format';
@@ -8,6 +9,8 @@ import { REGIONS } from '../../game/data/regions';
 import { getProduct } from '../../game/data/products';
 import { estimateDaysToNetWorth } from '../../game/engine/projection';
 import { getLevelUpRequirement } from '../../game/engine/formulas';
+import { isShopOpen, getMissingCerts, getOpeningProgress } from '../../game/systems/OpeningSystem';
+import { CERT_DEFINITION_MAP } from '../../game/data/certificates';
 
 interface Props { onClose: () => void }
 
@@ -40,6 +43,8 @@ export const DashboardPanel: React.FC<Props> = ({ onClose }) => {
   const todayExpenses = useGameStore(s => s.todayExpenses);
   const todayOrdersCount = useGameStore(s => s.todayOrdersCount);
   const netWorthHistory = useGameStore(s => s.netWorthHistory);
+  const certificates = useGameStore(s => s.certificates);
+  const difficultyId = useGameStore(s => s.difficultyId);
   const setActivePanel = useGameStore(s => s.setActivePanel);
 
   const pendingOrders = orders.filter(o => o.status === 'pending').length;
@@ -60,6 +65,12 @@ export const DashboardPanel: React.FC<Props> = ({ onClose }) => {
   const hasUpgraded = player.shopLevel >= 2;
   const doneById: Record<string, boolean> = { stock: hasStock, order: hasOrder, ship: hasShipped, upgrade: hasUpgraded };
   const steps = ONBOARDING_STEPS.map(s => ({ ...s, done: doneById[s.id] }));
+
+  // 筹备开业（难度开业封锁）：派生值随 certificates/difficultyId 订阅变化重算
+  const latest = { ...useGameStore.getState(), certificates, difficultyId };
+  const shopOpen = isShopOpen(latest);
+  const missingCerts = getMissingCerts(latest);
+  const openingProgress = getOpeningProgress(latest);
 
   return (
     <Panel title="📊 每日看板" onClose={onClose}>
@@ -118,6 +129,31 @@ export const DashboardPanel: React.FC<Props> = ({ onClose }) => {
               </div>
             );
           })()}
+        </div>
+      )}
+
+      {/* 筹备开业（normal/hard 需先办证） */}
+      {openingProgress.total > 0 && !shopOpen && (
+        <div className="glass-panel mb-4 border-rose-500/30">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-bold text-rose-300">🔒 筹备开业</h4>
+            <span className="text-xs text-slate-500 font-mono">{openingProgress.done} / {openingProgress.total} 证</span>
+          </div>
+          <ProgressBar
+            label="开业证件"
+            value={openingProgress.done}
+            max={openingProgress.total}
+            display={`${openingProgress.done} / ${openingProgress.total}`}
+            color="#f43f5e"
+            glow
+          />
+          <p className="text-xs text-slate-400 mt-3">
+            办齐 <span className="text-rose-300">{missingCerts.map(id => CERT_DEFINITION_MAP[id].name).join('、')}</span> 后自动开业，
+            未开业无法上架与接单。
+          </p>
+          <Button size="sm" variant="primary" className="mt-3" onClick={() => setActivePanel('compliance')}>
+            📜 去办证 →
+          </Button>
         </div>
       )}
 

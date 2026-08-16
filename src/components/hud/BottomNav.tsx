@@ -1,5 +1,6 @@
 import React from 'react';
 import { useGameStore } from '../../stores/gameStore';
+import { getMissingCerts } from '../../game/systems/OpeningSystem';
 
 interface NavItem {
   id: string;
@@ -18,6 +19,7 @@ const navItems: NavItem[] = [
   { id: 'finance', icon: '💰', label: '财务', panel: 'finance' },
   { id: 'shop', icon: '🏪', label: '店铺', panel: 'shop' },
   { id: 'tax', icon: '🧾', label: '税务', panel: 'tax' },
+  { id: 'compliance', icon: '📜', label: '办证', panel: 'compliance' },
   { id: 'employees', icon: '🧑‍💼', label: '员工', panel: 'employees' },
   { id: 'loans', icon: '💳', label: '贷款', panel: 'loans' },
   { id: 'marketing', icon: '📣', label: '营销', panel: 'marketing' },
@@ -33,11 +35,13 @@ export const BottomNav: React.FC = () => {
 
   const pendingCount = orders.filter(o => o.status === 'pending').length;
   const unlistedCount = inventory.filter(i => i.quantity > 0 && !(i.isListed ?? false)).length;
+  const missingCertsCount = getMissingCerts(useGameStore.getState()).length;
 
   const badges: Record<string, { count: number; color: string } | undefined> = {
     orders: pendingCount > 0 ? { count: pendingCount, color: 'bg-red-500' } : undefined,
     logistics: pendingCount > 0 ? { count: pendingCount, color: 'bg-amber-500' } : undefined,
     listing: unlistedCount > 0 ? { count: unlistedCount, color: 'bg-sky-500' } : undefined,
+    compliance: missingCertsCount > 0 ? { count: missingCertsCount, color: 'bg-rose-500' } : undefined,
   };
 
   return (
