@@ -7,6 +7,9 @@ npm-debug.log*
 sim_*.txt
 sim_*.log
 
+# Headless playtest tooling (local driver scripts + screenshots)
+.playtest/
+
 # Local Claude Code settings (machine/user-specific, not shared)
 .claude/settings.local.json
 yarn-debug.log*

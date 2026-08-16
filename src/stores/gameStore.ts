@@ -214,6 +214,45 @@ function generateInitialState(opts: NewGameOptions = {}): GameState {
   };
 }
 
+/** 从 store 摘出纯数据字段：store 混有 action 函数，整体序列化（IndexedDB）/参与每日结算会携带函数。
+ *  - 存档与 runDay 入参都走这里，避免函数混入状态（曾导致 autosave 持续 DataCloneError 静默失败） */
+function pickGameState(store: GameState): GameState {
+  return {
+    player: store.player,
+    inventory: store.inventory,
+    orders: store.orders,
+    influencers: store.influencers,
+    notifications: store.notifications,
+    gameSpeed: store.gameSpeed,
+    gamePhase: store.gamePhase,
+    activePanel: store.activePanel,
+    activeScene: store.activeScene,
+    todayRevenue: store.todayRevenue,
+    todayExpenses: store.todayExpenses,
+    todayOrdersCount: store.todayOrdersCount,
+    eventCooldowns: store.eventCooldowns,
+    certificates: store.certificates,
+    competitors: store.competitors,
+    competitionPressure: store.competitionPressure,
+    employees: store.employees,
+    tax: store.tax,
+    campaigns: store.campaigns,
+    loans: store.loans,
+    reviews: store.reviews,
+    carrierId: store.carrierId,
+    legalSubscribed: store.legalSubscribed,
+    season: store.season,
+    hotCategories: store.hotCategories,
+    identityId: store.identityId,
+    difficultyId: store.difficultyId,
+    mainCategory: store.mainCategory,
+    goal: store.goal,
+    activeChainId: store.activeChainId,
+    netWorthHistory: store.netWorthHistory,
+    onboardingRewardClaimed: store.onboardingRewardClaimed,
+  };
+}
+
 export const useGameStore = create<GameStore>((set, get) => ({
   ...generateInitialState(),
   gameLoop: new GameLoop('1x'),
@@ -600,40 +639,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   // === 存档 ===
   saveGame: async (slot: number, name?: string) => {
-    const store = get();
-    const state: GameState = {
-      player: store.player,
-      inventory: store.inventory,
-      orders: store.orders,
-      influencers: store.influencers,
-      notifications: store.notifications,
-      gameSpeed: store.gameSpeed,
-      gamePhase: store.gamePhase,
-      activePanel: store.activePanel,
-      activeScene: store.activeScene,
-      todayRevenue: store.todayRevenue,
-      todayExpenses: store.todayExpenses,
-      todayOrdersCount: store.todayOrdersCount,
-      eventCooldowns: store.eventCooldowns,
-      certificates: store.certificates,
-      competitors: store.competitors,
-      competitionPressure: store.competitionPressure,
-      employees: store.employees,
-      tax: store.tax,
-      campaigns: store.campaigns,
-      loans: store.loans,
-      reviews: store.reviews,
-      carrierId: store.carrierId,
-      legalSubscribed: store.legalSubscribed,
-      season: store.season,
-      hotCategories: store.hotCategories,
-      identityId: store.identityId,
-      difficultyId: store.difficultyId,
-      mainCategory: store.mainCategory,
-      goal: store.goal,
-      activeChainId: store.activeChainId,
-      netWorthHistory: store.netWorthHistory,
-    };
+    const state = pickGameState(get());
     const ok = await SaveSystem.save(slot, state, name);
     if (ok) get().addNotification('存档成功', `已保存到槽位 ${slot}`, 'success');
     return ok;
@@ -740,7 +746,8 @@ function advanceOneDay(
   const day = store.player.day + 1;
 
   // 通过可插拔的 DayProcessor 注册表推进一整天（纯函数聚合，便于扩展维护）
-  const ctx = runDay(store, day);
+  // 入参必须是纯数据状态：store 混有 action 函数，直接传入会让函数随 nextState 流入自动存档导致序列化失败
+  const ctx = runDay(pickGameState(store), day);
   const player = ctx.state.player;
 
   // 回款特效：当日有营收结算时浮动提示

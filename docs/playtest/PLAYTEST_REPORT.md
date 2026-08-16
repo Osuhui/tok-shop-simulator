@@ -211,3 +211,11 @@
 - **文档同步**：Content_Design 7.2 hard `startGoldMultiplier` 0.8→0.9 并标注 2026-08-15 校准、7.3 伪代码标注已实现；MainMenu hard 文案「资金×0.8」→「资金×0.9」。
 
 **验证**：tsc strict ✅ / Vitest **69/69** ✅（新增 OpeningSystem、LoanSystem 罚息宽限、TaskSystem 扣费防重、开业封锁与 store 集成用例）/ 生产构建 ✅ / 平衡模拟 **27/27 victory、0 破产**，梯度保持——easy D43-77 / normal D67-130 / hard D88-157（hard 最慢局距 330 天上限余量 170+ 天，开业封锁的平衡冲击远小于预估：L0 四证总成本仅 $300、最慢 5 天办结）。
+
+### 无头浏览器试玩复验（2026-08-16）
+
+用 puppeteer-core + 系统 Edge 无头驱动真实界面完整走通两局，顺带挖出一个**自基线就存在的自动存档 bug**：
+
+- **hard 流程 ✅**：开局 Dashboard 出现「筹备开业」卡、上架红点 3、办证红点 3 → 办证面板申请 3 证（创业者自带营业执照）→ 面板显示「办理中 · 预计 Day X 下发」→ 6 天自动开业（筹备卡消失）→ 上架成功 → 3 天后自然流量订单流入（待处理 14 单）。控制台零错误。
+- **easy 对照 ✅**：开局无筹备卡、初始库存 3 件已上架。
+- **🐛 修复：自动存档一直静默失败**——`advanceOneDay` 把整个 zustand store（含 action 函数）传入 `runDay`，函数随 `nextState` 进入 `SaveSystem.autoSave` → IndexedDB `DataCloneError`，被 `.catch(() => {})` 吞掉。自基线起「继续游戏」实际只能读到手动存档。修复：新增 `pickGameState` 纯数据摘取，`runDay` 入参与 `saveGame`/`autoSave` 均走它（顺带修正手动存档漏存 `onboardingRewardClaimed`）。
