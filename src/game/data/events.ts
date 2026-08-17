@@ -1001,4 +1001,31 @@ export const EVENTS: GameEvent[] = [
     ],
     cooldownDays: 7,
   },
+  {
+    id: 'evt_loyal_customer',
+    title: '⭐ 老客回购好评',
+    description: '一位复购三次的老顾客在社媒晒单并 @ 了你，带动了一波自然流量与口碑。',
+    type: 'opportunity',
+    triggerCondition: { minDay: 20, probability: 0.16 },
+    choices: [
+      {
+        id: 'thank',
+        text: 'A. 私信致谢并寄小样（声誉 +4，花费 $150）',
+        successRate: 1.0,
+        cost: 150,
+        successEffects: [
+          { type: 'reputation', target: 'player', value: 4, description: '老客口碑发酵，声誉 +4' },
+        ],
+        failEffects: [],
+      },
+      {
+        id: 'ignore',
+        text: 'B. 顺其自然',
+        successRate: 1.0,
+        successEffects: [],
+        failEffects: [],
+      },
+    ],
+    cooldownDays: 16,
+  },
 ];

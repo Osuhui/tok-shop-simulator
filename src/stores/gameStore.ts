@@ -771,7 +771,14 @@ function advanceOneDay(
   const player = ctx.state.player;
 
   // 升级音效（店铺等级较昨日提升）
-  if (player.shopLevel > store.player.shopLevel) audioManager.playSfx('levelUp');
+  if (player.shopLevel > store.player.shopLevel) {
+    audioManager.playSfx('levelUp');
+    get().addNotification(
+      `🏬 店铺升级至 Lv.${player.shopLevel}`,
+      '小店规模更上一层楼，自然流量与接单能力随之提升，继续向通关目标迈进！',
+      'success',
+    );
+  }
 
   // 回款特效：当日有营收结算时浮动提示
   if (ctx.todayRevenue > 0) {
