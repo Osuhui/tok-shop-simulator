@@ -7,8 +7,8 @@ export const GOALS: Record<DifficultyId, GameGoal> = {
   easy: {
     day: 365,
     shopLevel: 6,
-    netWorth: 10000,
-    label: '稳健经营：第 365 天前做到 Lv.6、净资产 $10,000',
+    netWorth: 12000,
+    label: '稳健经营：第 365 天前做到 Lv.6、净资产 $12,000',
   },
   normal: {
     day: 365,
