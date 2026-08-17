@@ -1,5 +1,8 @@
 // ============================================================
-// 本地存储封装（localStorage 备用，主力是 idb-keyval）
+// 设置项存储封装 —— 仅用于小量配置（GameSettings），存到 localStorage。
+// 注意：游戏进度存档（完整 GameState）不在这里，而是由
+// src/game/systems/SaveSystem.ts 通过 idb-keyval 写入 IndexedDB。
+// 两者分工不同：设置用 localStorage，存档用 IndexedDB。
 // ============================================================
 
 const PREFIX = 'tokshop_';
