@@ -47,6 +47,7 @@ export type GameCommand =
   | { type: 'inventory'; target: string; value: number; description?: string }
   | { type: 'startStoryChain'; chainId: string; description?: string }
   | { type: 'grantCertificate'; certId: string; description?: string }
+  | { type: 'applyCertificate'; certId: CertId; description?: string } // 剧情链"一键申请办证"：store 层经 applyCertificate 施加（扣费+进入办理中+防重）
   | { type: 'unlockTask'; taskId: string; description?: string }
   | { type: 'influencerRelation'; id: string; delta: number; description?: string }
   | { type: 'sendMessage'; from: string; title: string; body: string; description?: string };
@@ -252,6 +253,7 @@ export interface EventCondition {
   minPendingOrders?: number;
   minAuditRisk?: number; // 稽查风险达到阈值才触发（税务稽查事件）
   identityId?: string; // 仅特定身份可见（身份专属剧情）
+  openingCert?: CertId; // 筹备开店链：该证须是本难度开业要求且当前未申请/未持有才引导
   probability: number;
 }
 
@@ -282,6 +284,7 @@ export interface PlayerTaxState {
   vatRegistered: boolean;
   auditRisk: number; // 0..1 漏报累计稽查风险
   lastAuditDay: number;
+  latePenalty?: number; // 逾期滞纳金累计（每逾期周期按欠税比例加收，申报缴清后清零）
 }
 
 // ============================================================

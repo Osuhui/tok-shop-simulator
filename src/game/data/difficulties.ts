@@ -27,7 +27,7 @@ export const DIFFICULTIES: Record<string, DifficultyConfig> = {
     blockOpening: true,
     requiredBeforeOpening: [...ALL_L0],
     gracePeriodDays: 0,
-    startGoldMultiplier: 0.9,
+    startGoldMultiplier: 0.85,
     penaltyMultiplier: 1.3,
   },
 };

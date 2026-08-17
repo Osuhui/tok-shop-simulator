@@ -2,7 +2,9 @@
 // 随机事件引擎
 // ============================================================
 import type { GameEvent, GameState, EventChoice, GameCommand } from '../types';
-import { isEventAvailable, getNextChainEvent } from './StoryEngine';
+import { isEventAvailable } from './StoryEngine';
+import { getChainEvents } from '../data/storyChains';
+import { getRequiredCertIds } from '../systems/OpeningSystem';
 
 /** 事件触发条件是否满足（区域/天数/健康/等级/商品/待处理/稽查风险/身份/冷却） */
 export function eventConditionMet(state: GameState, event: GameEvent): boolean {
@@ -22,6 +24,12 @@ export function eventConditionMet(state: GameState, event: GameEvent): boolean {
   }
   if (cond.minAuditRisk !== undefined && state.tax.auditRisk < cond.minAuditRisk) return false;
   if (cond.identityId && state.identityId !== cond.identityId) return false;
+  // 筹备开店链节点：该证须是本难度开业要求，且当前尚未申请（none）——已申请/已持有则跳过，链继续推进
+  if (cond.openingCert !== undefined) {
+    const required = getRequiredCertIds(state.difficultyId);
+    if (!required.includes(cond.openingCert)) return false;
+    if (state.certificates.some((c) => c.id === cond.openingCert && c.status !== 'none')) return false;
+  }
   if (!isEventAvailable(state, event)) return false;
   return true;
 }
@@ -46,10 +54,13 @@ export function driveChainEvent(
   pool: GameEvent[],
 ): GameEvent | null {
   if (!chainId) return null;
-  const ev = getNextChainEvent(state, chainId, pool);
-  if (!ev) return null;
-  if (!eventConditionMet(state, ev)) return null;
-  if (Math.random() < ev.triggerCondition.probability) return ev;
+  // 遍历链上所有 stage（按 stage 升序），返回第一个"条件满足"的事件。
+  // 已申请/已持有/非本难度要求的节点会被自动跳过，链继续推进——
+  // 筹备开店链依赖此跳过身份自带(preowned)证件，并按"最早未办要求证"顺序引导。
+  const chainEvents = getChainEvents(chainId, pool);
+  for (const ev of chainEvents) {
+    if (eventConditionMet(state, ev) && Math.random() < ev.triggerCondition.probability) return ev;
+  }
   return null;
 }
 

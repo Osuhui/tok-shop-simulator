@@ -13,6 +13,7 @@ export function createInitialTax(): PlayerTaxState {
     vatRegistered: false,
     auditRisk: 0,
     lastAuditDay: 0,
+    latePenalty: 0,
   };
 }
 
@@ -35,7 +36,7 @@ export function fileTax(state: GameState, day: number): GameState {
   return {
     ...state,
     player: { ...state.player, gold: Math.round((state.player.gold - state.tax.taxOwed) * 100) / 100 },
-    tax: { ...state.tax, taxOwed: 0, lastFilingDay: day, auditRisk: 0 },
+    tax: { ...state.tax, taxOwed: 0, latePenalty: 0, lastFilingDay: day, auditRisk: 0 },
   };
 }
 
@@ -46,10 +47,18 @@ export function checkAudit(state: GameState, day: number): { state: GameState; t
   if (day - state.tax.lastFilingDay < cycle) return { state, triggerAudit: false };
   if (state.tax.taxOwed <= 0) return { state, triggerAudit: false };
 
+  // 逾期申报：加收滞纳金（欠税 10%；UK 未持 VAT 证则 ×2 惩罚更重），并累积稽查风险
+  const penaltyRate = state.player.currentRegion === 'UK' && !state.tax.vatRegistered ? 0.2 : 0.1;
+  const penalty = Math.round(state.tax.taxOwed * penaltyRate * 100) / 100;
+  const taxOwed = Math.round((state.tax.taxOwed + penalty) * 100) / 100;
+  const latePenalty = Math.round(((state.tax.latePenalty ?? 0) + penalty) * 100) / 100;
   const auditRisk = Math.min(1, state.tax.auditRisk + 0.25);
   const triggerAudit = auditRisk >= 0.5;
   return {
-    state: { ...state, tax: { ...state.tax, auditRisk, lastAuditDay: triggerAudit ? day : state.tax.lastAuditDay } },
+    state: {
+      ...state,
+      tax: { ...state.tax, taxOwed, latePenalty, auditRisk, lastAuditDay: triggerAudit ? day : state.tax.lastAuditDay },
+    },
     triggerAudit,
   };
 }

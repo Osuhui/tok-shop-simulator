@@ -503,49 +503,11 @@ export const EVENTS: GameEvent[] = [
 
   // ===== 税务剧情 =====
   {
-    id: 'evt_tax_audit',
-    chainId: 'TAX_CHAIN',
-    chainStage: 0,
-    title: '🧾 税务稽查上门',
-    description: '税务局稽查人员找上门，称你长期未申报流转税，怀疑存在偷逃税行为。账目会被彻查，后果严重。',
-    type: 'risk',
-    triggerCondition: {
-      minDay: 20,
-      minAuditRisk: 0.5,
-      probability: 0.5,
-    },
-    choices: [
-      {
-        id: 'cooperate',
-        text: 'A. 配合稽查并补税罚款（$1500）',
-        successRate: 1.0,
-        cost: 1500,
-        successEffects: [
-          { type: 'gold', target: 'player', value: -1500, description: '补税罚款 $1500' },
-          { type: 'healthScore', target: 'player', value: -0.5, description: '健康分 -0.5' },
-        ],
-        failEffects: [],
-      },
-      {
-        id: 'evade',
-        text: 'B. 抗拒稽查，销毁账目（高风险）',
-        successRate: 0.1,
-        successEffects: [
-          { type: 'reputation', target: 'player', value: 5, description: '暂时蒙混过关' },
-        ],
-        failEffects: [
-          { type: 'gold', target: 'player', value: -99999, description: '账户被冻结，游戏结束' },
-        ],
-      },
-    ],
-    cooldownDays: 30,
-  },
-  {
     id: 'evt_tax_filing_reminder',
     chainId: 'TAX_CHAIN',
-    chainStage: 1,
+    chainStage: 0,
     title: '📅 申报期提醒',
-    description: '你的税务申报周期已临近，系统提示：按时申报可清零稽查风险，长期拖延将招致稽查。',
+    description: '你的税务申报周期已临近，系统提示：按时申报可清零稽查风险，长期拖延不仅招致稽查，还会加收滞纳金。',
     type: 'neutral',
     triggerCondition: {
       minDay: 10,
@@ -570,6 +532,81 @@ export const EVENTS: GameEvent[] = [
       },
     ],
     cooldownDays: 12,
+  },
+  {
+    id: 'evt_tax_audit',
+    chainId: 'TAX_CHAIN',
+    chainStage: 1,
+    title: '🧾 税务稽查上门',
+    description: '税务局稽查人员找上门，称你长期未申报流转税，怀疑存在偷逃税行为。账目会被彻查，后果严重。',
+    type: 'risk',
+    triggerCondition: {
+      minDay: 20,
+      minAuditRisk: 0.5,
+      probability: 0.5,
+    },
+    choices: [
+      {
+        id: 'cooperate',
+        text: 'A. 配合稽查并补税罚款（$1500）',
+        successRate: 1.0,
+        cost: 1500,
+        successEffects: [
+          { type: 'healthScore', target: 'player', value: -0.5, description: '健康分 -0.5' },
+        ],
+        failEffects: [],
+      },
+      {
+        id: 'evade',
+        text: 'B. 抗拒稽查，销毁账目（高风险）',
+        successRate: 0.1,
+        successEffects: [
+          { type: 'reputation', target: 'player', value: 5, description: '暂时蒙混过关' },
+        ],
+        failEffects: [
+          { type: 'gold', target: 'player', value: -99999, description: '账户被冻结，游戏结束' },
+        ],
+      },
+    ],
+    cooldownDays: 30,
+  },
+  {
+    id: 'evt_tax_audit_aftermath',
+    chainId: 'TAX_CHAIN',
+    chainStage: 2,
+    title: '🚨 稽查后续：补缴与整改',
+    description: '稽查人员留下限期补缴通知，并加收罚款与滞纳金。若继续拖延，下一次稽查可能直接冻结账户。',
+    type: 'risk',
+    triggerCondition: {
+      minDay: 20,
+      minAuditRisk: 0.5,
+      probability: 0.5,
+    },
+    choices: [
+      {
+        id: 'remediate',
+        text: 'A. 立即补缴+整改（罚款 $2000，健康分-0.5、声誉-10，务必尽快申报）',
+        successRate: 1.0,
+        cost: 2000,
+        successEffects: [
+          { type: 'healthScore', target: 'player', value: -0.5, description: '整改压力，健康分-0.5' },
+          { type: 'reputation', target: 'player', value: -10, description: '声誉-10' },
+          { type: 'sendMessage', from: '税务局', title: '稽查整改通知', body: '已记录你的补缴与整改，请务必在申报期内完成税款缴纳，否则将面临更严稽查。' },
+        ],
+        failEffects: [],
+      },
+      {
+        id: 'stall',
+        text: 'B. 拖延不理（健康分-1.0、声誉-15，风险持续累积）',
+        successRate: 1.0,
+        successEffects: [
+          { type: 'healthScore', target: 'player', value: -1.0, description: '健康分-1.0' },
+          { type: 'reputation', target: 'player', value: -15, description: '声誉-15' },
+        ],
+        failEffects: [],
+      },
+    ],
+    cooldownDays: 25,
   },
 
   // ===== 身份专属剧情：创业者·供应链链 =====
@@ -796,5 +833,91 @@ export const EVENTS: GameEvent[] = [
       },
     ],
     cooldownDays: 18,
+  },
+
+  // ===== 筹备开店链（OPENING_CHAIN）：把"办齐开业证件"剧情化，弹窗一键申请 =====
+  {
+    id: 'evt_open_seller_verify',
+    chainId: 'OPENING_CHAIN',
+    chainStage: 0,
+    title: '🪪 平台邀你实名开店',
+    description: 'TokShop 招商经理发来开店邀请：先完成卖家实名认证——这是解锁收款与清关的前提，也是跨境经营的第一步。',
+    type: 'neutral',
+    triggerCondition: { openingCert: 'SELLER_VERIFY', minDay: 1, probability: 0.95 },
+    choices: [
+      {
+        id: 'apply',
+        text: 'A. 立即实名认证（免费 · 1 天办结）',
+        successRate: 1.0,
+        successEffects: [
+          { type: 'applyCertificate', certId: 'SELLER_VERIFY', description: '已提交实名认证申请' },
+        ],
+        failEffects: [],
+      },
+    ],
+    cooldownDays: 2,
+  },
+  {
+    id: 'evt_open_business_license',
+    chainId: 'OPENING_CHAIN',
+    chainStage: 1,
+    title: '📄 营业执照待办提醒',
+    description: '实名已过，下一步是跨境主体营业执照。它提升店铺可信度，也是正规清关与平台活动的敲门砖。',
+    type: 'neutral',
+    triggerCondition: { openingCert: 'BUSINESS_LICENSE', minDay: 1, probability: 0.95 },
+    choices: [
+      {
+        id: 'apply',
+        text: 'A. 立即申请营业执照（$200 · 5 天办结）',
+        successRate: 1.0,
+        successEffects: [
+          { type: 'applyCertificate', certId: 'BUSINESS_LICENSE', description: '已提交营业执照申请' },
+        ],
+        failEffects: [],
+      },
+    ],
+    cooldownDays: 2,
+  },
+  {
+    id: 'evt_open_receiving_account',
+    chainId: 'OPENING_CHAIN',
+    chainStage: 2,
+    title: '🏦 跨境收款账户待开通',
+    description: '要收到海外买家的货款，得先绑定跨境收款账户（如 Payoneer / 万里汇）。这一步免费，当天就能搞定。',
+    type: 'neutral',
+    triggerCondition: { openingCert: 'RECEIVING_ACCOUNT', minDay: 1, probability: 0.95 },
+    choices: [
+      {
+        id: 'apply',
+        text: 'A. 立即开通收款账户（免费 · 1 天办结）',
+        successRate: 1.0,
+        successEffects: [
+          { type: 'applyCertificate', certId: 'RECEIVING_ACCOUNT', description: '已提交收款账户开通申请' },
+        ],
+        failEffects: [],
+      },
+    ],
+    cooldownDays: 2,
+  },
+  {
+    id: 'evt_open_customs_reg',
+    chainId: 'OPENING_CHAIN',
+    chainStage: 3,
+    title: '🛃 海关进出口备案待办',
+    description: '最后一步：海关进出口收发货人备案。正规清关的前提，办齐它你的跨境小店就能正式开门营业了。',
+    type: 'neutral',
+    triggerCondition: { openingCert: 'CUSTOMS_REG', minDay: 1, probability: 0.95 },
+    choices: [
+      {
+        id: 'apply',
+        text: 'A. 立即办理海关备案（$100 · 3 天办结）',
+        successRate: 1.0,
+        successEffects: [
+          { type: 'applyCertificate', certId: 'CUSTOMS_REG', description: '已提交海关备案申请' },
+        ],
+        failEffects: [],
+      },
+    ],
+    cooldownDays: 2,
   },
 ];

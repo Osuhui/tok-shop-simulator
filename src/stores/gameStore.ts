@@ -17,6 +17,7 @@ import type {
   EmployeeRole,
   CampaignType,
   CarrierId,
+  GameCommand,
 } from '../game/types';
 import { INITIAL_PLAYER_STATE } from '../game/types';
 import { GameLoop } from '../game/engine/GameLoop';
@@ -38,6 +39,7 @@ import { selectCarrier as selectCarrierFn, shippingMultiplier } from '../game/sy
 import { IDENTITIES } from '../game/data/identities';
 import { DIFFICULTIES } from '../game/data/difficulties';
 import { GOALS } from '../game/data/goals';
+import { OPENING_CHAIN_ID } from '../game/data/storyChains';
 import { seasonForDay } from '../game/data/seasonConfig';
 import { CERT_DEFINITION_MAP } from '../game/data/certificates';
 import { SaveSystem } from '../game/systems/SaveSystem';
@@ -208,7 +210,8 @@ function generateInitialState(opts: NewGameOptions = {}): GameState {
     difficultyId,
     mainCategory: opts.mainCategory,
     goal,
-    activeChainId: IDENTITIES[identityId].storyChainId,
+    // 需开业证件的难度（normal/hard）开局先走"筹备开店"剧情链引导办证；easy 直接开业走身份链
+    activeChainId: getRequiredCertIds(difficultyId).length > 0 ? OPENING_CHAIN_ID : IDENTITIES[identityId].storyChainId,
     netWorthHistory: [],
     onboardingRewardClaimed: false,
   };
@@ -716,6 +719,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
       gamePhase: 'playing',
     });
 
+    // 剧情链"一键申请办证"命令：复用 applyCertificate（扣费 + 进入办理中 + 防重），不进 EffectBus 纯函数
+    effects
+      .filter((e): e is Extract<GameCommand, { type: 'applyCertificate' }> => e.type === 'applyCertificate')
+      .forEach((e) => get().applyCertificate(e.certId));
+
     const outcomeText = success ? '成功！' : '失败...';
     get().addNotification(
       `${store.activeEvent.title} — ${outcomeText}`,
@@ -793,6 +801,26 @@ function advanceOneDay(
     todayOrdersCount: ctx.todayOrdersCount,
     netWorthHistory: history,
   };
+  // 开业状态：决定当前驱动哪条剧情链 + 检测"本帧刚开业"以便庆祝 / 切回身份链
+  const needsOpening = getRequiredCertIds(nextState.difficultyId).length > 0;
+  const wasOpen = isShopOpen(pickGameState(store));
+  const nowOpen = isShopOpen(nextState);
+  let chainId: string | undefined = nextState.activeChainId;
+  if (needsOpening && !nowOpen) {
+    chainId = OPENING_CHAIN_ID; // 未开业：优先引导筹备开店链
+  } else if (needsOpening && nowOpen && chainId === OPENING_CHAIN_ID) {
+    chainId = IDENTITIES[nextState.identityId ?? 'entrepreneur'].storyChainId; // 刚开业：切回身份专属链
+  }
+
+  // 刚达成开业：发一次庆祝通知（仅在状态切换那一刻）
+  if (needsOpening && nowOpen && !wasOpen) {
+    get().addNotification(
+      '🎉 开业大吉！',
+      '你的跨境小店已通过合规审核正式开业，自然流量与达人合作已开放。',
+      'success',
+    );
+  }
+
   // 随机非链事件（剧情链事件仅由下方按顺序驱动，避免乱序触发）
   const randomPool = EVENTS.filter((e) => !e.chainId);
   const triggeredEvent = tryTriggerEvent(nextState, randomPool);
@@ -801,17 +829,17 @@ function advanceOneDay(
     const eventCooldowns = { ...nextState.eventCooldowns };
     const expiry = nextCooldownDay(nextState, triggeredEvent);
     if (expiry !== undefined) eventCooldowns[triggeredEvent.id] = expiry;
-    set({ ...nextState, activeEvent: triggeredEvent, gamePhase: 'event', eventCooldowns });
+    set({ ...nextState, activeEvent: triggeredEvent, gamePhase: 'event', eventCooldowns, activeChainId: chainId });
     return;
   }
 
-  // 剧情链按序推进：取身份绑定链上的下一个可用事件，stage 升序、可重复触发
-  const chainEvent = driveChainEvent(nextState, nextState.activeChainId, EVENTS);
+  // 剧情链按序推进：取当前链（筹备开店链 / 身份链）的下一个可用事件，stage 升序、可重复触发
+  const chainEvent = driveChainEvent(nextState, chainId, EVENTS);
   if (chainEvent && store.activeEvent === null) {
     const eventCooldowns = { ...nextState.eventCooldowns };
     const expiry = nextCooldownDay(nextState, chainEvent);
     if (expiry !== undefined) eventCooldowns[chainEvent.id] = expiry;
-    set({ ...nextState, activeEvent: chainEvent, gamePhase: 'event', eventCooldowns });
+    set({ ...nextState, activeEvent: chainEvent, gamePhase: 'event', eventCooldowns, activeChainId: chainId });
     return;
   }
 

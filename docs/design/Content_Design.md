@@ -313,11 +313,11 @@ interface DifficultyConfig {
 | blockOpening | false | false | true |
 | requiredBeforeOpening | [] | [SELLER_VERIFY, RECEIVING_ACCOUNT] | 全部 L0 |
 | gracePeriodDays | 14 | 7 | 0 |
-| startGoldMultiplier | 1.3 | 1.0 | 0.9 |
+| startGoldMultiplier | 1.3 | 1.0 | 0.85 |
 | penaltyMultiplier | 0.7 | 1.0 | 1.3 |
 
 > 难度只调节"开业严格度 + 全局松紧",不删减内容(L0 全类别、身份差异始终生效)。
-> hard `startGoldMultiplier` 已由 0.8 校准为 0.9（2026-08-15 难度校准，见 PLAYTEST_REPORT 迭代记录）。
+> hard `startGoldMultiplier` 已由 0.8 校准为 0.85（2026-08-16 再平衡，见 PLAYTEST_REPORT 迭代记录）。
 
 ### 7.3 初始化流程(伪代码)
 > ✅ 已实现（2026-08-16）：`OpeningSystem.getRequiredCertIds` 即第 328 行三元；"筹备开店"以开业封锁 + 办证面板 + Dashboard 筹备卡的形式落地（完整 StoryChain 留待内容 Sprint）。

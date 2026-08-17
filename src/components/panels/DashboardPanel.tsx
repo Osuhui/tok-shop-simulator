@@ -45,6 +45,7 @@ export const DashboardPanel: React.FC<Props> = ({ onClose }) => {
   const netWorthHistory = useGameStore(s => s.netWorthHistory);
   const certificates = useGameStore(s => s.certificates);
   const difficultyId = useGameStore(s => s.difficultyId);
+  const activeChainId = useGameStore(s => s.activeChainId);
   const setActivePanel = useGameStore(s => s.setActivePanel);
 
   const pendingOrders = orders.filter(o => o.status === 'pending').length;
@@ -150,9 +151,10 @@ export const DashboardPanel: React.FC<Props> = ({ onClose }) => {
           <p className="text-xs text-slate-400 mt-3">
             办齐 <span className="text-rose-300">{missingCerts.map(id => CERT_DEFINITION_MAP[id].name).join('、')}</span> 后自动开业，
             未开业无法上架与接单。
+            {activeChainId === 'OPENING_CHAIN' && ' 跟随剧情弹窗即可一步步办理，也可随时到「办证」面板查看进度。'}
           </p>
           <Button size="sm" variant="primary" className="mt-3" onClick={() => setActivePanel('compliance')}>
-            📜 去办证 →
+            📜 {activeChainId === 'OPENING_CHAIN' ? '查看办证进度' : '去办证'} →
           </Button>
         </div>
       )}

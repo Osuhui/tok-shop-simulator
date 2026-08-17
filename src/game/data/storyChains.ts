@@ -26,7 +26,7 @@ export const STORY_CHAINS: StoryChain[] = [
     id: 'TAX_CHAIN',
     title: '税务稽查连环',
     description: '从申报提醒到稽查上门，税务合规是跨境店铺长期经营绕不开的一道坎。',
-    eventIds: ['evt_tax_filing_reminder', 'evt_tax_audit'],
+    eventIds: ['evt_tax_filing_reminder', 'evt_tax_audit', 'evt_tax_audit_aftermath'],
   },
   {
     id: 'chain_supply_chain',
@@ -46,7 +46,21 @@ export const STORY_CHAINS: StoryChain[] = [
     description: '从校园市集到同学入伙，边上学边开店，小本生意也能长出故事。',
     eventIds: ['evt_stu_campus_fair', 'evt_stu_classmate_partner'],
   },
+  {
+    id: 'OPENING_CHAIN',
+    title: '筹备开店·合规启航',
+    description: '从实名认证到海关备案，跟着剧情引导一步步把跨境小店的开业证件办齐，正式开门营业。',
+    eventIds: [
+      'evt_open_seller_verify',
+      'evt_open_business_license',
+      'evt_open_receiving_account',
+      'evt_open_customs_reg',
+    ],
+  },
 ];
+
+/** 筹备开店剧情链 id（未开业阶段由 advanceOneDay 优先驱动，开业后切回身份链） */
+export const OPENING_CHAIN_ID = 'OPENING_CHAIN';
 
 /** 取某剧情链的全部事件（按链上 stage 升序），供 StoryEngine 使用 */
 export function getChainEvents(chainId: string, pool: GameEvent[] = EVENTS): GameEvent[] {

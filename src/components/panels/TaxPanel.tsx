@@ -74,6 +74,14 @@ export const TaxPanel: React.FC<Props> = ({ onClose }) => {
         </div>
       </div>
 
+      {/* 逾期滞纳金（拖延申报的代价） */}
+      {(tax.latePenalty ?? 0) > 0 && (
+        <div className="bg-rose-500/10 border border-rose-700 rounded-lg p-4 mb-4">
+          <p className="text-sm text-rose-300 font-bold">⚠️ 逾期滞纳金累计 {formatGold(tax.latePenalty ?? 0)}</p>
+          <p className="text-xs text-slate-400 mt-1">拖延申报每周期按欠税加收滞纳金，请尽快到「申报缴税」缴清（缴清后清零）。</p>
+        </div>
+      )}
+
       {/* VAT 登记状态 */}
       <div className="bg-slate-800/50 rounded-lg p-4 mb-4 flex items-center justify-between">
         <div>
@@ -104,7 +112,7 @@ export const TaxPanel: React.FC<Props> = ({ onClose }) => {
       {/* 申报操作 */}
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs text-slate-500">
-          按时申报可清零稽查风险；长期拖延将累积风险直至稽查上门。
+          按时申报可清零稽查风险与滞纳金；长期拖延将累积风险、加收滞纳金，直至稽查上门。
         </p>
         <Button
           variant={tax.taxOwed > 0 ? 'danger' : 'secondary'}
