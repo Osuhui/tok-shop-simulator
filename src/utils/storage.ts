@@ -44,6 +44,8 @@ export const storage = {
 export interface GameSettings {
   musicVolume: number;
   sfxVolume: number;
+  sfxEnabled: boolean;
+  musicEnabled: boolean;
   language: 'zh' | 'en';
   defaultSpeed: '1x' | '2x';
 }
@@ -51,6 +53,8 @@ export interface GameSettings {
 const DEFAULT_SETTINGS: GameSettings = {
   musicVolume: 0.5,
   sfxVolume: 0.7,
+  sfxEnabled: true,
+  musicEnabled: false,
   language: 'zh',
   defaultSpeed: '1x',
 };

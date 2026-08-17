@@ -1,6 +1,7 @@
 import React from 'react';
 import { useGameStore } from '../../stores/gameStore';
 import { getMissingCerts } from '../../game/systems/OpeningSystem';
+import { audioManager } from '../../utils/audio';
 
 interface NavItem {
   id: string;
@@ -54,7 +55,7 @@ export const BottomNav: React.FC = () => {
           return (
             <button
               key={item.id}
-              onClick={() => setActivePanel(activePanel === item.panel ? null : item.panel)}
+              onClick={() => { audioManager.playSfx('click'); setActivePanel(activePanel === item.panel ? null : item.panel); }}
               className={`flex flex-col items-center gap-0.5 px-1.5 py-1.5 rounded-lg transition-all cursor-pointer ${
                 activePanel === item.panel
                   ? 'bg-purple-600/20 text-purple-400'

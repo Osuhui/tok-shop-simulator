@@ -47,6 +47,7 @@ import { CERT_DEFINITION_MAP } from '../game/data/certificates';
 import { SaveSystem } from '../game/systems/SaveSystem';
 import { createInitialAchievements } from '../game/systems/AchievementSystem';
 import { createInitialMetricsHistory } from '../game/systems/MetricsSystem';
+import { audioManager } from '../utils/audio';
 import { getProduct } from '../game/data/products';
 import { getInfluencer, INFLUENCERS as INFLUENCERS_DATA } from '../game/data/influencers';
 import { EVENTS } from '../game/data/events';
@@ -683,6 +684,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       timestamp: Date.now(),
       read: false,
     };
+    if (type === 'danger') audioManager.playSfx('error');
+    else if (type === 'warning') audioManager.playSfx('warning');
+    else if (type === 'success') audioManager.playSfx('success');
     set(state => ({
       notifications: [notification, ...state.notifications].slice(0, 50), // 最多保留50条
     }));
@@ -766,9 +770,13 @@ function advanceOneDay(
   const ctx = runDay(pickGameState(store), day);
   const player = ctx.state.player;
 
+  // 升级音效（店铺等级较昨日提升）
+  if (player.shopLevel > store.player.shopLevel) audioManager.playSfx('levelUp');
+
   // 回款特效：当日有营收结算时浮动提示
   if (ctx.todayRevenue > 0) {
     fxBus.emit('gold', `💰 +$${Math.round(ctx.todayRevenue).toLocaleString()}`);
+    audioManager.playSfx('coin');
   }
 
   // 净资产快照（同时用于通关判定与看板趋势推演）
@@ -790,6 +798,7 @@ function advanceOneDay(
   if (ctx.state.goal) {
     if (player.shopLevel >= ctx.state.goal.shopLevel && netWorth >= ctx.state.goal.netWorth) {
       fxBus.emit('victory', '🏆 通关达成！');
+      audioManager.playSfx('victory');
       set({ player });
       // 延迟切换胜利画面，让 FxLayer 有时间渲染庆祝特效
       setTimeout(() => set({ gamePhase: 'victory' }), 200);
@@ -858,6 +867,7 @@ function advanceOneDay(
     const eventCooldowns = { ...nextState.eventCooldowns };
     const expiry = nextCooldownDay(nextState, triggeredEvent);
     if (expiry !== undefined) eventCooldowns[triggeredEvent.id] = expiry;
+    audioManager.playSfx('event');
     set({ ...nextState, activeEvent: triggeredEvent, gamePhase: 'event', eventCooldowns, activeChainId: chainId });
     return;
   }
@@ -868,6 +878,7 @@ function advanceOneDay(
     const eventCooldowns = { ...nextState.eventCooldowns };
     const expiry = nextCooldownDay(nextState, chainEvent);
     if (expiry !== undefined) eventCooldowns[chainEvent.id] = expiry;
+    audioManager.playSfx('event');
     set({ ...nextState, activeEvent: chainEvent, gamePhase: 'event', eventCooldowns, activeChainId: chainId });
     return;
   }

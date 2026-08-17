@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useGameStore } from '../../stores/gameStore';
 import { useUIStore } from '../../stores/uiStore';
 import { useGameLoop } from '../../hooks/useGameLoop';
@@ -28,6 +28,9 @@ import { OnboardingModal } from './OnboardingModal';
 import { AnimatePresence } from 'framer-motion';
 import { EventDialog } from '../panels/EventDialog';
 import { FxLayer } from '../fx/FxLayer';
+import { storage } from '../../utils/storage';
+import type { GameSettings } from '../../utils/storage';
+import { audioManager } from '../../utils/audio';
 
 export const GameScreen: React.FC = () => {
   const activePanel = useGameStore(s => s.activePanel);
@@ -43,6 +46,16 @@ export const GameScreen: React.FC = () => {
   const setOnboardingSeen = useUIStore(s => s.setOnboardingSeen);
   const notifications = useGameStore(s => s.notifications);
   const markNotificationRead = useGameStore(s => s.markNotificationRead);
+
+  // 音频设置：本地状态 + 持久化 + 实时应用到 AudioManager
+  const [settings, setSettings] = useState<GameSettings>(storage.getSettings());
+  const updateSettings = (patch: Partial<GameSettings>) => {
+    const next = { ...settings, ...patch };
+    setSettings(next);
+    storage.setSettings(next);
+    audioManager.configure(next);
+  };
+  useEffect(() => { audioManager.configure(storage.getSettings()); }, []);
 
   // 启动游戏循环
   useGameLoop();
@@ -142,15 +155,29 @@ export const GameScreen: React.FC = () => {
 
       {/* 设置模态 */}
       <Modal isOpen={showSettings} onClose={toggleSettings} title="⚙️ 设置" maxWidth="max-w-sm">
-        <div className="space-y-4">
-          <p className="text-sm text-slate-400">管理你的游戏存档：保存进度、读取旧档、删除无用槽位。</p>
-          <button
-            onClick={() => { toggleSettings(); setActivePanel('save'); }}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2.5 px-3 rounded-lg text-sm font-medium cursor-pointer transition-colors"
-          >
-            💾 打开存档管理
-          </button>
-          <div className="text-xs text-slate-600 pt-4 text-center">
+        <div className="space-y-5">
+          {/* 音频 */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold text-slate-300">🔊 音频</h4>
+            <ToggleRow label="音效" desc="按钮 / 收款 / 升级 / 成就提示" value={settings.sfxEnabled} onChange={(v) => updateSettings({ sfxEnabled: v })} />
+            <SliderRow label="音效音量" value={settings.sfxVolume} onChange={(v) => updateSettings({ sfxVolume: v })} />
+            <ToggleRow label="背景音乐" desc="程序化生成的环境音 pad" value={settings.musicEnabled} onChange={(v) => updateSettings({ musicEnabled: v })} />
+            <SliderRow label="音乐音量" value={settings.musicVolume} onChange={(v) => updateSettings({ musicVolume: v })} />
+          </div>
+
+          {/* 存档 */}
+          <div className="space-y-3 pt-3 border-t border-slate-700/40">
+            <h4 className="text-sm font-semibold text-slate-300">💾 存档</h4>
+            <p className="text-sm text-slate-400">管理你的游戏存档：保存进度、读取旧档、删除无用槽位。</p>
+            <button
+              onClick={() => { toggleSettings(); setActivePanel('save'); }}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2.5 px-3 rounded-lg text-sm font-medium cursor-pointer transition-colors"
+            >
+              💾 打开存档管理
+            </button>
+          </div>
+
+          <div className="text-xs text-slate-600 pt-2 text-center">
             Phase 0 · React + Three.js + Zustand
           </div>
         </div>
@@ -161,3 +188,52 @@ export const GameScreen: React.FC = () => {
     </div>
   );
 };
+
+const ToggleRow: React.FC<{ label: string; desc: string; value: boolean; onChange: (v: boolean) => void }> = ({
+  label,
+  desc,
+  value,
+  onChange,
+}) => (
+  <div className="flex items-center justify-between gap-3">
+    <div>
+      <p className="text-sm text-slate-200">{label}</p>
+      <p className="text-xs text-slate-500">{desc}</p>
+    </div>
+    <button
+      onClick={() => onChange(!value)}
+      className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer shrink-0 ${
+        value ? 'bg-purple-600' : 'bg-slate-700'
+      }`}
+      aria-pressed={value}
+    >
+      <span
+        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
+          value ? 'translate-x-5' : ''
+        }`}
+      />
+    </button>
+  </div>
+);
+
+const SliderRow: React.FC<{ label: string; value: number; onChange: (v: number) => void }> = ({
+  label,
+  value,
+  onChange,
+}) => (
+  <div className="space-y-1">
+    <div className="flex items-center justify-between">
+      <span className="text-sm text-slate-200">{label}</span>
+      <span className="text-xs text-slate-500 font-mono">{Math.round(value * 100)}%</span>
+    </div>
+    <input
+      type="range"
+      min={0}
+      max={1}
+      step={0.05}
+      value={value}
+      onChange={(e) => onChange(Number(e.target.value))}
+      className="w-full accent-purple-500 cursor-pointer"
+    />
+  </div>
+);
