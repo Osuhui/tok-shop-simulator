@@ -423,6 +423,34 @@ export interface GameGoal {
 }
 
 // ============================================================
+// 成就系统
+// ============================================================
+export type AchievementCategory = 'business' | 'finance' | 'compliance' | 'growth' | 'social' | 'reputation';
+
+export interface AchievementDef {
+  id: string;
+  name: string;
+  description: string;
+  category: AchievementCategory;
+  icon: string;
+  /** 纯函数判定：满足条件即解锁（只读 state，禁止改写经济字段） */
+  condition: (state: GameState) => boolean;
+}
+
+export interface AchievementProgress {
+  id: string;
+  unlocked: boolean;
+  unlockedDay?: number;
+}
+
+export interface MetricHistory {
+  netWorth: number[];
+  revenue: number[];
+  expense: number[];
+  orders: number[];
+}
+
+// ============================================================
 // 全局游戏状态
 // ============================================================
 
@@ -459,6 +487,8 @@ export interface GameState {
   goal?: GameGoal;                        // 当前档位的经营目标（用于进度展示与通关判定）
   activeChainId?: string;                 // 玩家当前身份绑定的剧情链（用于按序推进）
   netWorthHistory?: number[];             // 近 7 日净资产快照（用于看板"预计剩余天数"推算）
+  achievements: AchievementProgress[];    // 成就解锁进度（纯观测，每日由 achievementProcessor 评估）
+  metricsHistory?: MetricHistory;        // 经营指标历史（净资产/营收/支出/订单，按日滚动，供数据看板可视化）
 }
 
 // ============================================================

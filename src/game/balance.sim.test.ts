@@ -14,6 +14,8 @@ import { getProduct } from './data/products';
 import { INFLUENCERS } from './data/influencers';
 import { seasonForDay } from './data/seasonConfig';
 import { CERT_DEFINITION_MAP } from './data/certificates';
+import { createInitialAchievements } from './systems/AchievementSystem';
+import { createInitialMetricsHistory } from './systems/MetricsSystem';
 import { createInitialTax } from './systems/TaxSystem';
 import { createInitialCompetitors } from './systems/CompetitionSystem';
 import { createInitialEmployees } from './systems/EmployeeSystem';
@@ -97,6 +99,8 @@ function buildInitialState(opts: { identityId?: any; difficultyId?: any; region?
     hotCategories: seasonForDay(0).hotCategories,
     identityId, difficultyId, mainCategory: undefined,
     goal, activeChainId: IDENTITIES[identityId].storyChainId,
+    achievements: createInitialAchievements(),
+    metricsHistory: createInitialMetricsHistory(),
   } as GameState;
 }
 

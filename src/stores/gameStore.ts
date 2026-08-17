@@ -4,6 +4,7 @@
 import { create } from 'zustand';
 import type {
   GameState,
+  MetricHistory,
   GameSpeed,
   RegionId,
   Notification,
@@ -40,9 +41,12 @@ import { IDENTITIES } from '../game/data/identities';
 import { DIFFICULTIES } from '../game/data/difficulties';
 import { GOALS } from '../game/data/goals';
 import { OPENING_CHAIN_ID } from '../game/data/storyChains';
+import { ACHIEVEMENTS } from '../game/data/achievements';
 import { seasonForDay } from '../game/data/seasonConfig';
 import { CERT_DEFINITION_MAP } from '../game/data/certificates';
 import { SaveSystem } from '../game/systems/SaveSystem';
+import { createInitialAchievements } from '../game/systems/AchievementSystem';
+import { createInitialMetricsHistory } from '../game/systems/MetricsSystem';
 import { getProduct } from '../game/data/products';
 import { getInfluencer, INFLUENCERS as INFLUENCERS_DATA } from '../game/data/influencers';
 import { EVENTS } from '../game/data/events';
@@ -210,6 +214,8 @@ function generateInitialState(opts: NewGameOptions = {}): GameState {
     difficultyId,
     mainCategory: opts.mainCategory,
     goal,
+    achievements: createInitialAchievements(),
+    metricsHistory: createInitialMetricsHistory(),
     // 需开业证件的难度（normal/hard）开局先走"筹备开店"剧情链引导办证；easy 直接开业走身份链
     activeChainId: getRequiredCertIds(difficultyId).length > 0 ? OPENING_CHAIN_ID : IDENTITIES[identityId].storyChainId,
     netWorthHistory: [],
@@ -253,6 +259,8 @@ function pickGameState(store: GameState): GameState {
     activeChainId: store.activeChainId,
     netWorthHistory: store.netWorthHistory,
     onboardingRewardClaimed: store.onboardingRewardClaimed,
+    achievements: store.achievements,
+    metricsHistory: store.metricsHistory ?? createInitialMetricsHistory(),
   };
 }
 
@@ -792,6 +800,15 @@ function advanceOneDay(
   // 合并当日自然流量新订单
   const orders = [...ctx.state.orders, ...ctx.newOrders];
 
+  // 经营指标历史（按日滚动，供数据看板可视化；纯观测，不影响经济）
+  const prevMetrics = ctx.state.metricsHistory ?? createInitialMetricsHistory();
+  const metricsHistory: MetricHistory = {
+    netWorth: [...prevMetrics.netWorth, netWorth].slice(-30),
+    revenue: [...prevMetrics.revenue, ctx.todayRevenue].slice(-30),
+    expense: [...prevMetrics.expense, ctx.todayExpenses].slice(-30),
+    orders: [...prevMetrics.orders, ctx.todayOrdersCount].slice(-30),
+  };
+
   // 事件检查（新一天结束后、存档前）：暂停并展示事件
   let nextState: GameState = {
     ...ctx.state,
@@ -800,6 +817,7 @@ function advanceOneDay(
     todayExpenses: ctx.todayExpenses,
     todayOrdersCount: ctx.todayOrdersCount,
     netWorthHistory: history,
+    metricsHistory,
   };
   // 开业状态：决定当前驱动哪条剧情链 + 检测"本帧刚开业"以便庆祝 / 切回身份链
   const needsOpening = getRequiredCertIds(nextState.difficultyId).length > 0;
@@ -819,6 +837,17 @@ function advanceOneDay(
       '你的跨境小店已通过合规审核正式开业，自然流量与达人合作已开放。',
       'success',
     );
+  }
+
+  // 成就解锁通知（纯观测，不改动经济状态）
+  const prevAch = pickGameState(store).achievements ?? [];
+  const nextAch = nextState.achievements ?? [];
+  for (const a of nextAch) {
+    if (!a.unlocked) continue;
+    const before = prevAch.find((p) => p.id === a.id);
+    if (before && before.unlocked) continue;
+    const def = ACHIEVEMENTS.find((d) => d.id === a.id);
+    if (def) get().addNotification(`🏆 成就解锁：${def.name}`, def.description, 'success');
   }
 
   // 随机非链事件（剧情链事件仅由下方按顺序驱动，避免乱序触发）

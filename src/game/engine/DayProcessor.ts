@@ -16,6 +16,7 @@ import { employeeProcessor } from '../systems/EmployeeSystem';
 import { marketingProcessor } from '../systems/MarketingSystem';
 import { loanProcessor } from '../systems/LoanSystem';
 import { sourcingProcessor } from '../systems/SourcingTrendSystem';
+import { achievementProcessor } from '../systems/AchievementSystem';
 
 /** 单日推进过程中累积 / 传递的状态 */
 export interface DayContext {
@@ -163,6 +164,7 @@ export const DAY_PROCESSORS: DayProcessor[] = [
   sourcingProcessor,
   loanProcessor,
   advanceCertificatesProcessor,
+  achievementProcessor,
 ];
 
 /** 运行一整天，返回推进后的 DayContext（state 已含当日全部变更，newOrders 尚未并入 orders） */

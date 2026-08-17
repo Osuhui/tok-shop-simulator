@@ -25,6 +25,8 @@ const navItems: NavItem[] = [
   { id: 'marketing', icon: '📣', label: '营销', panel: 'marketing' },
   { id: 'carrier', icon: '🚚', label: '承运商', panel: 'carrier' },
   { id: 'save', icon: '💾', label: '存档', panel: 'save' },
+  { id: 'achievements', icon: '🏆', label: '成就', panel: 'achievements' },
+  { id: 'data', icon: '📈', label: '数据', panel: 'data' },
 ];
 
 export const BottomNav: React.FC = () => {

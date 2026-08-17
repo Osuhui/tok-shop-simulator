@@ -3,6 +3,8 @@ import type { GameState, Order } from './types';
 import { INITIAL_PLAYER_STATE } from './types';
 import { INFLUENCERS } from './data/influencers';
 import { createInitialTax } from './systems/TaxSystem';
+import { createInitialAchievements } from './systems/AchievementSystem';
+import { createInitialMetricsHistory } from './systems/MetricsSystem';
 
 export function createTestState(overrides: Partial<GameState> = {}): GameState {
   return {
@@ -31,6 +33,8 @@ export function createTestState(overrides: Partial<GameState> = {}): GameState {
     legalSubscribed: false,
     season: 0,
     hotCategories: [],
+    achievements: createInitialAchievements(),
+    metricsHistory: createInitialMetricsHistory(),
     ...overrides,
   };
 }

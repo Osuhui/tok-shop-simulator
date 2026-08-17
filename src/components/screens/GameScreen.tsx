@@ -20,6 +20,8 @@ import { MarketingPanel } from '../panels/MarketingPanel';
 import { CarrierPanel } from '../panels/CarrierPanel';
 import { ListingPanel } from '../panels/ListingPanel';
 import { CompliancePanel } from '../panels/CompliancePanel';
+import { AchievementPanel } from '../panels/AchievementPanel';
+import { DataPanel } from '../panels/DataPanel';
 import { SaveLoadPanel } from '../panels/SaveLoadPanel';
 import { Modal } from '../ui/Modal';
 import { OnboardingModal } from './OnboardingModal';
@@ -69,6 +71,8 @@ export const GameScreen: React.FC = () => {
       case 'employees': return <EmployeePanel onClose={onClose} />;
       case 'loans': return <LoanPanel onClose={onClose} />;
       case 'compliance': return <CompliancePanel onClose={onClose} />;
+      case 'achievements': return <AchievementPanel onClose={onClose} />;
+      case 'data': return <DataPanel onClose={onClose} />;
       case 'marketing': return <MarketingPanel onClose={onClose} />;
       case 'carrier': return <CarrierPanel onClose={onClose} />;
       case 'save': return <SaveLoadPanel onClose={onClose} />;
