@@ -920,4 +920,85 @@ export const EVENTS: GameEvent[] = [
     ],
     cooldownDays: 2,
   },
+  // ===== 故事化补全：物流 / 财务 / 竞争 叙事事件 =====
+  {
+    id: 'evt_carrier_pitch',
+    title: '📦 物流商推销邮件',
+    description: '一家新承运商发来合作邮件：签约可享首月运费补贴，但需一次性技术服务费。仓储经理提醒，稳定的物流商能减少纠纷与差评。',
+    type: 'opportunity',
+    triggerCondition: { minDay: 10, probability: 0.14 },
+    choices: [
+      {
+        id: 'sign',
+        text: 'A. 签约合作（技术服务费 $300，物流更稳、声誉 +5）',
+        successRate: 1.0,
+        cost: 300,
+        successEffects: [
+          { type: 'reputation', target: 'player', value: 5, description: '物流更稳，声誉 +5' },
+        ],
+        failEffects: [],
+      },
+      {
+        id: 'decline',
+        text: 'B. 暂不更换物流商',
+        successRate: 1.0,
+        successEffects: [],
+        failEffects: [],
+      },
+    ],
+    cooldownDays: 14,
+  },
+  {
+    id: 'evt_payday_call',
+    title: '📞 "极速贷" 来电',
+    description: '一通推销电话：小额极速周转，半小时到账，仅收一点手续费。资金紧时能救急，但长期依赖会推高财务成本。',
+    type: 'opportunity',
+    triggerCondition: { minDay: 8, probability: 0.12 },
+    choices: [
+      {
+        id: 'borrow',
+        text: 'A. 借 $1000 周转（手续费 $100，现金净 +$900）',
+        successRate: 1.0,
+        cost: 100,
+        successEffects: [
+          { type: 'gold', target: 'player', value: 1000, description: '极速贷到账 $1000' },
+        ],
+        failEffects: [],
+      },
+      {
+        id: 'decline',
+        text: 'B. 婉拒，靠自有资金周转',
+        successRate: 1.0,
+        successEffects: [],
+        failEffects: [],
+      },
+    ],
+    cooldownDays: 12,
+  },
+  {
+    id: 'evt_market_report',
+    title: '📊 市场周报送达',
+    description: '行业周报：竞品上周上新两款爆品，类目流量向短视频倾斜。研读它或许能帮你更早抓住下一波趋势。',
+    type: 'neutral',
+    triggerCondition: { minDay: 15, probability: 0.22 },
+    choices: [
+      {
+        id: 'study',
+        text: 'A. 研读周报并微调选品（声誉 +3，洞察力提升）',
+        successRate: 1.0,
+        successEffects: [
+          { type: 'reputation', target: 'player', value: 3, description: '研读周报，声誉 +3' },
+        ],
+        failEffects: [],
+      },
+      {
+        id: 'skip',
+        text: 'B. 先忙店里的事',
+        successRate: 1.0,
+        successEffects: [],
+        failEffects: [],
+      },
+    ],
+    cooldownDays: 7,
+  },
 ];
