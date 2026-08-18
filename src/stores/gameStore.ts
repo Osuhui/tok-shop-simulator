@@ -55,7 +55,7 @@ import { tryTriggerEvent, driveChainEvent, resolveEventChoice } from '../game/en
 import { applyCommands } from '../game/engine/EffectBus';
 import { runDay } from '../game/engine/DayProcessor';
 import { nextCooldownDay } from '../game/engine/StoryEngine';
-import { isShopOpen, getRequiredCertIds } from '../game/systems/OpeningSystem';
+import { isShopOpen, getRequiredCertIds, getMissingCerts } from '../game/systems/OpeningSystem';
 import { fxBus } from '../game/fxBus';
 import type { GameEvent } from '../game/types';
 
@@ -104,6 +104,7 @@ interface GameStore extends GameState {
 
   // 证件 / 开业
   applyCertificate: (certId: CertId) => { success: boolean; message: string };
+  applyAllOpeningCerts: () => void;
 
   // 营销
   startCampaign: (type: CampaignType, spend: number) => { success: boolean; message: string };
@@ -178,8 +179,10 @@ function generateInitialState(opts: NewGameOptions = {}): GameState {
     player.gold += identity.loan.amount;
   }
 
-  // 开业封锁：easy（无开业证件要求）初始库存默认已上架；normal/hard 需先办证开业后再上架
-  const initiallyListed = getRequiredCertIds(difficultyId).length === 0;
+  // 初始库存开局即上架：自然流量生成本就受 isShopOpen 门控（FinanceSystem.generateOrganicOrders），
+  // 店未开不来单、开了立刻来单——保证 normal/hard「办证开业」后绝不卡在「有货却无单」的死胡同。
+  // 新采购到的货仍默认未上架（SourcingSystem），保留「上架开张」机制与教学。
+  const initiallyListed = true;
 
   return {
     player,
@@ -500,24 +503,30 @@ export const useGameStore = create<GameStore>((set, get) => ({
     );
 
     if (overdueOrders.length > 0) {
+      // 新手宽容期：前 3 单完成前免逾期罚款与健康分扣减，第一课不"被系统惩罚"
+      const newbieGrace = store.player.totalOrdersCompleted < 3;
       const orders = store.orders.map(o =>
         o.status === 'pending' && store.player.day > o.deadline
           ? { ...o, status: 'cancelled' as const }
           : o
       );
 
-      const player = {
-        ...store.player,
-        gold: store.player.gold - totalPenalty,
-        healthScore: Math.max(0, store.player.healthScore - overdueOrders.length * 0.2),
-        totalFines: store.player.totalFines + totalPenalty,
-      };
+      const player = newbieGrace
+        ? store.player
+        : {
+            ...store.player,
+            gold: store.player.gold - totalPenalty,
+            healthScore: Math.max(0, store.player.healthScore - overdueOrders.length * 0.2),
+            totalFines: store.player.totalFines + totalPenalty,
+          };
 
       set({ orders, player });
       get().addNotification(
-        '订单超时',
-        `${overdueOrders.length} 个订单超时未发货，罚款 $${totalPenalty.toFixed(2)}，健康分 -${(overdueOrders.length * 0.2).toFixed(1)}`,
-        'danger'
+        newbieGrace ? '订单超时（新手保护）' : '订单超时',
+        newbieGrace
+          ? `${overdueOrders.length} 个订单超时未发货，已取消。新手保护期内免罚款、免健康分扣减——记得及时去「物流」发货哦。`
+          : `${overdueOrders.length} 个订单超时未发货，罚款 $${totalPenalty.toFixed(2)}，健康分 -${(overdueOrders.length * 0.2).toFixed(1)}`,
+        newbieGrace ? 'warning' : 'danger'
       );
     }
   },
@@ -623,6 +632,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
       'success',
     );
     return { success: true, message: `已申请 ${def.name}` };
+  },
+
+  /** 一键申请全部开业所需证件（新手向导用：免去逐张点击） */
+  applyAllOpeningCerts: () => {
+    const store = get();
+    if (store.gamePhase !== 'playing') return;
+    getMissingCerts(store).forEach((certId) => get().applyCertificate(certId));
   },
 
   // === 营销 ===
@@ -846,11 +862,18 @@ function advanceOneDay(
     chainId = IDENTITIES[nextState.identityId ?? 'entrepreneur'].storyChainId; // 刚开业：切回身份专属链
   }
 
-  // 刚达成开业：发一次庆祝通知（仅在状态切换那一刻）
+  // 刚达成开业：自动上架初始库存 + 庆祝通知（仅在状态切换那一刻）
+  // P0-1 修复：normal/hard 初始库存 isListed=false，玩家若不开架则永远无自然订单，
+  // 在"开业"这一刻把已在仓库存货（inboundQuantity===0）自动上架，堵住默认路径死胡同；
+  // 后续新采购到的货到仓时仍默认未上架（需主动上架，保留仪式感）。
   if (needsOpening && nowOpen && !wasOpen) {
+    const autoListed = nextState.inventory.map((it) =>
+      it.inboundQuantity === 0 && !it.isListed ? { ...it, isListed: true } : it,
+    );
+    nextState = { ...nextState, inventory: autoListed };
     get().addNotification(
       '🎉 开业大吉！',
-      '你的跨境小店已通过合规审核正式开业，自然流量与达人合作已开放。',
+      '你的跨境小店已通过合规审核正式开业，初始商品已自动上架，自然流量与达人合作已开放。',
       'success',
     );
   }

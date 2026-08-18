@@ -4,6 +4,7 @@ import { Button } from '../ui/Button';
 import { useGameStore } from '../../stores/gameStore';
 import { isShopOpen, getMissingCerts } from '../../game/systems/OpeningSystem';
 import { CERT_DEFINITION_MAP } from '../../game/data/certificates';
+import { getProduct } from '../../game/data/products';
 
 interface Props { onClose: () => void }
 
@@ -20,9 +21,20 @@ export const ListingPanel: React.FC<Props> = ({ onClose }) => {
   } | null>(null);
 
   const inStockItems = inventory.filter(i => (i.isListed ?? false) || i.quantity > 0 || i.inboundQuantity > 0);
+  const unlistedInStock = inStockItems.filter(i => !(i.isListed ?? false) && i.quantity > 0);
   const latest = { ...useGameStore.getState(), certificates };
   const shopOpen = isShopOpen(latest);
   const missingCerts = getMissingCerts(latest);
+
+  const handleListAll = () => {
+    let ok = 0;
+    unlistedInStock.forEach(item => {
+      const name = getProduct(item.productId)?.name ?? item.productId;
+      const r = checkAndListProduct(item.productId, name);
+      if (r.passed) ok++;
+    });
+    if (ok > 0) setComplianceResult({ passed: true, violations: [], penaltyLevel: 'none' });
+  };
 
   const handleCheck = () => {
     if (!selectedItem || !title.trim()) return;
@@ -46,6 +58,19 @@ export const ListingPanel: React.FC<Props> = ({ onClose }) => {
           </p>
         </div>
       )}
+
+      {shopOpen && unlistedInStock.length > 0 && (
+        <div className="rounded-lg border border-purple-700 bg-purple-500/10 p-4 mb-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium text-purple-300">⏳ 有 {unlistedInStock.length} 件未上架商品</p>
+            <p className="text-xs text-slate-400 mt-1">未上架的商品不会产生自然流量订单。</p>
+          </div>
+          <Button variant="primary" size="sm" onClick={handleListAll}>
+            🚀 一键开张全部
+          </Button>
+        </div>
+      )}
+
       {inStockItems.length === 0 ? (
         <p className="text-slate-500 text-sm text-center py-8">
           暂无库存商品。请先在"选品"中采购商品。

@@ -66,8 +66,8 @@ function buildInitialState(opts: { identityId?: any; difficultyId?: any; region?
     player.gold += identity.loan.amount;
   }
 
-  // 开业封锁：与 gameStore.generateInitialState 一致——有开业证件要求的难度初始库存不上架
-  const initiallyListed = getRequiredCertIds(difficultyId).length === 0;
+  // 与 gameStore.generateInitialState 一致——初始库存开局即上架（订单仍受 isShopOpen 门控）
+  const initiallyListed = true;
 
   return {
     player,

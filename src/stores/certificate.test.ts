@@ -48,4 +48,23 @@ describe('store.applyCertificate 与开业封锁', () => {
     expect(st.inventory.every((i) => i.isListed === true)).toBe(true);
     expect(st.checkAndListProduct('prod_stanup_cup', '斯坦杯 便携').passed).toBe(true);
   });
+
+  it('P0-1 修复：normal/hard 开业那一刻自动上架初始库存（堵住"开业无订单"死胡同）', () => {
+    useGameStore.getState().initNewGame({ identityId: 'student', difficultyId: 'hard', region: 'UK' });
+    // 申请全部开业证件（状态 applying，到期待审）
+    for (const id of HARD_L0) {
+      expect(useGameStore.getState().applyCertificate(id).success).toBe(true);
+    }
+    // 让证件在下一步结束时即可转 active（模拟到期），从而触发"开业"这一刻
+    const st = useGameStore.getState();
+    useGameStore.setState({
+      certificates: st.certificates.map((c) => ({ ...c, grantedDay: st.player.day })),
+    });
+    // 推进一步：advanceCertificatesProcessor 将证件转 active → isShopOpen 由 false 变 true → 自动上架
+    useGameStore.getState().skipToNextDay();
+    const after = useGameStore.getState();
+    const inWarehouse = after.inventory.filter((i) => i.inboundQuantity === 0);
+    expect(inWarehouse.length).toBeGreaterThan(0);
+    expect(inWarehouse.every((i) => i.isListed === true)).toBe(true); // 已在仓库的初始库存被自动上架
+  });
 });

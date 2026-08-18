@@ -2,6 +2,8 @@ import React from 'react';
 import { useGameStore } from '../../stores/gameStore';
 import { getMissingCerts } from '../../game/systems/OpeningSystem';
 import { audioManager } from '../../utils/audio';
+import { Tooltip } from '../ui/Tooltip';
+import { NAV_GLOSSARY } from '../../game/data/glossary';
 
 interface NavItem {
   id: string;
@@ -47,6 +49,9 @@ export const BottomNav: React.FC = () => {
     compliance: missingCertsCount > 0 ? { count: missingCertsCount, color: 'bg-rose-500' } : undefined,
   };
 
+  // 缺证时办证入口脉冲高亮（新手向导：把第一要务顶到眼前）
+  const complianceHighlight = missingCertsCount > 0;
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 bg-slate-900/90 backdrop-blur-md border-t border-slate-700/50">
       <div className="flex items-center justify-around px-1 py-1.5">
@@ -59,18 +64,22 @@ export const BottomNav: React.FC = () => {
               className={`flex flex-col items-center gap-0.5 px-1.5 py-1.5 rounded-lg transition-all cursor-pointer ${
                 activePanel === item.panel
                   ? 'bg-purple-600/20 text-purple-400'
-                  : 'text-slate-500 hover:text-slate-300'
+                  : complianceHighlight && item.id === 'compliance'
+                    ? 'text-rose-400 bg-rose-500/10 ring-1 ring-rose-500/50 nav-pulse'
+                    : 'text-slate-500 hover:text-slate-300'
               }`}
             >
-              <span className="relative text-lg">
-                {item.icon}
-                {badge && (
-                  <span className={`absolute -top-1 -right-2 min-w-4 h-4 px-1 ${badge.color} text-white text-[10px] rounded-full flex items-center justify-center font-bold`}>
-                    {badge.count > 9 ? '9+' : badge.count}
-                  </span>
-                )}
-              </span>
-              <span className="text-[10px] font-medium">{item.label}</span>
+              <Tooltip content={NAV_GLOSSARY[item.id] ?? ''} side="top">
+                <span className="relative text-lg">
+                  {item.icon}
+                  {badge && (
+                    <span className={`absolute -top-1 -right-2 min-w-4 h-4 px-1 ${badge.color} text-white text-[10px] rounded-full flex items-center justify-center font-bold`}>
+                      {badge.count > 9 ? '9+' : badge.count}
+                    </span>
+                  )}
+                </span>
+                <span className="text-[10px] font-medium">{item.label}</span>
+              </Tooltip>
             </button>
           );
         })}

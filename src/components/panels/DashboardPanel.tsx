@@ -11,6 +11,8 @@ import { estimateDaysToNetWorth } from '../../game/engine/projection';
 import { getLevelUpRequirement } from '../../game/engine/formulas';
 import { isShopOpen, getMissingCerts, getOpeningProgress } from '../../game/systems/OpeningSystem';
 import { CERT_DEFINITION_MAP } from '../../game/data/certificates';
+import { Tooltip } from '../ui/Tooltip';
+import { KPI_GLOSSARY, DICTIONARY } from '../../game/data/glossary';
 
 interface Props { onClose: () => void }
 
@@ -46,6 +48,7 @@ export const DashboardPanel: React.FC<Props> = ({ onClose }) => {
   const certificates = useGameStore(s => s.certificates);
   const difficultyId = useGameStore(s => s.difficultyId);
   const activeChainId = useGameStore(s => s.activeChainId);
+  const applyAllOpeningCerts = useGameStore(s => s.applyAllOpeningCerts);
   const setActivePanel = useGameStore(s => s.setActivePanel);
 
   const pendingOrders = orders.filter(o => o.status === 'pending').length;
@@ -64,8 +67,12 @@ export const DashboardPanel: React.FC<Props> = ({ onClose }) => {
   const hasOrder = orders.length > 0;
   const hasShipped = orders.some(o => o.status !== 'pending');
   const hasUpgraded = player.shopLevel >= 2;
-  const doneById: Record<string, boolean> = { stock: hasStock, order: hasOrder, ship: hasShipped, upgrade: hasUpgraded };
-  const steps = ONBOARDING_STEPS.map(s => ({ ...s, done: doneById[s.id] }));
+  const unlistedCount = inventory.filter(i => i.quantity > 0 && !(i.isListed ?? false)).length;
+  const allListed = inventory.filter(i => i.quantity > 0).every(i => i.isListed ?? false);
+  const doneById: Record<string, boolean> = { stock: hasStock, list: allListed, order: hasOrder, ship: hasShipped, upgrade: hasUpgraded };
+  const steps = ONBOARDING_STEPS
+    .filter(s => s.id !== 'list' || unlistedCount > 0) // 上架步骤仅在存在未上架库存时出现
+    .map(s => ({ ...s, done: doneById[s.id] }));
 
   // 筹备开业（难度开业封锁）：派生值随 certificates/difficultyId 订阅变化重算
   const latest = { ...useGameStore.getState(), certificates, difficultyId };
@@ -77,17 +84,17 @@ export const DashboardPanel: React.FC<Props> = ({ onClose }) => {
     <Panel title="📊 每日看板" onClose={onClose}>
       {/* KPI 卡片 */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-        <KpiCard label="当前资金" value={formatGold(player.gold)} color="amber" />
-        <KpiCard label="今日利润" value={`${profitTrend} ${formatGold(Math.abs(dailyProfit))}`} color={dailyProfit >= 0 ? 'emerald' : 'rose'} />
-        <KpiCard label="今日支出" value={formatGold(todayExpenses)} color="slate" />
-        <KpiCard label="游戏天数" value={formatDay(player.day)} color="purple" />
+        <KpiCard label="当前资金" value={formatGold(player.gold)} color="amber" hint={KPI_GLOSSARY['当前资金']} />
+        <KpiCard label="今日利润" value={`${profitTrend} ${formatGold(Math.abs(dailyProfit))}`} color={dailyProfit >= 0 ? 'emerald' : 'rose'} hint={KPI_GLOSSARY['今日利润']} />
+        <KpiCard label="今日支出" value={formatGold(todayExpenses)} color="slate" hint={KPI_GLOSSARY['今日支出']} />
+        <KpiCard label="游戏天数" value={formatDay(player.day)} color="purple" hint={KPI_GLOSSARY['游戏天数']} />
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-        <KpiCard label="待处理订单" value={String(pendingOrders)} color={pendingOrders > 0 ? 'amber' : 'slate'} />
-        <KpiCard label="运输中" value={String(shippedOrders)} color="cyan" />
-        <KpiCard label="今日新单" value={String(todayOrdersCount)} color="sky" />
-        <KpiCard label="累计完成" value={formatNumber(player.totalOrdersCompleted)} color="emerald" />
+        <KpiCard label="待处理订单" value={String(pendingOrders)} color={pendingOrders > 0 ? 'amber' : 'slate'} hint={KPI_GLOSSARY['待处理订单']} />
+        <KpiCard label="运输中" value={String(shippedOrders)} color="cyan" hint={KPI_GLOSSARY['运输中']} />
+        <KpiCard label="今日新单" value={String(todayOrdersCount)} color="sky" hint={KPI_GLOSSARY['今日新单']} />
+        <KpiCard label="累计完成" value={formatNumber(player.totalOrdersCompleted)} color="emerald" hint={KPI_GLOSSARY['累计完成']} />
       </div>
 
       {/* 经营目标 */}
@@ -156,6 +163,11 @@ export const DashboardPanel: React.FC<Props> = ({ onClose }) => {
           <Button size="sm" variant="primary" className="mt-3" onClick={() => setActivePanel('compliance')}>
             📜 {activeChainId === 'OPENING_CHAIN' ? '查看办证进度' : '去办证'} →
           </Button>
+          {missingCerts.length > 0 && (
+            <Button size="sm" variant="success" className="mt-3 ml-2" onClick={() => applyAllOpeningCerts()}>
+              ⚡ 一键申请开业证件（{missingCerts.length} 项）
+            </Button>
+          )}
         </div>
       )}
 
@@ -182,20 +194,39 @@ export const DashboardPanel: React.FC<Props> = ({ onClose }) => {
           <InfoRow label="物流时效" value={`${region.logisticsSpeed} 天`} />
         </div>
       </div>
+
+      {/* 新手词典：把最易卡住零基础玩家的概念翻译成大白话 */}
+      <div className="glass-panel">
+        <h4 className="text-sm font-bold text-indigo-300 mb-3">📖 新手词典</h4>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+          {DICTIONARY.map(d => (
+            <div key={d.term} className="text-xs">
+              <span className="text-indigo-200 font-semibold">{d.term}</span>
+              <p className="text-slate-400 leading-relaxed mt-0.5">{d.plain}</p>
+            </div>
+          ))}
+        </div>
+      </div>
     </Panel>
   );
 };
 
 // ---- 子组件 ----
 
-const KpiCard: React.FC<{ label: string; value: string; color: string }> = ({ label, value, color }) => {
+const KpiCard: React.FC<{ label: string; value: string; color: string; hint?: string }> = ({ label, value, color, hint }) => {
   const colorMap: Record<string, string> = {
     amber: 'text-amber-400', emerald: 'text-emerald-400', rose: 'text-rose-400',
     purple: 'text-purple-400', cyan: 'text-cyan-400', sky: 'text-sky-400', slate: 'text-slate-400',
   };
   return (
     <div className="glass p-3 text-center">
-      <p className="text-xs text-slate-500 mb-1">{label}</p>
+      <p className="text-xs text-slate-500 mb-1 flex items-center justify-center gap-1">
+        {hint ? (
+          <Tooltip content={hint} widthClass="w-56">
+            <span className="cursor-help underline decoration-dotted decoration-slate-600">{label} <span className="text-slate-600">ⓘ</span></span>
+          </Tooltip>
+        ) : label}
+      </p>
       <p className={`text-lg font-bold font-mono tabular-nums ${colorMap[color] ?? 'text-slate-200'}`}>{value}</p>
     </div>
   );

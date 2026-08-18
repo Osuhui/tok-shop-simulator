@@ -25,6 +25,7 @@ export const CompliancePanel: React.FC<Props> = ({ onClose }) => {
   const player = useGameStore(s => s.player);
   const gamePhase = useGameStore(s => s.gamePhase);
   const applyCertificate = useGameStore(s => s.applyCertificate);
+  const applyAllOpeningCerts = useGameStore(s => s.applyAllOpeningCerts);
   const [status, setStatus] = useState<{ ok: boolean; msg: string } | null>(null);
 
   // 开业状态纯派生（certificates / difficultyId 变化时重算）
@@ -69,6 +70,17 @@ export const CompliancePanel: React.FC<Props> = ({ onClose }) => {
                 还差：
                 {missing.map(id => CERT_DEFINITION_MAP[id].name).join('、')}
               </p>
+            )}
+            {!open && missing.length > 0 && (
+              <Button
+                variant="primary"
+                size="sm"
+                className="mt-3"
+                disabled={gamePhase !== 'playing'}
+                onClick={() => { applyAllOpeningCerts(); setStatus({ ok: true, msg: `已一次性提交 ${missing.length} 项开业证件申请，到期待审后自动开业。` }); }}
+              >
+                📜 一键申请开业证件（{missing.length} 项）
+              </Button>
             )}
           </>
         ) : (

@@ -113,6 +113,11 @@ input[type="number"] { -moz-appearance: textfield; }
   50%      { transform: scale(1.15); }
 }
 .badge-pulse { animation: badge-pulse 2s ease-in-out infinite; }
+@keyframes nav-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.0); }
+  50%      { box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.35); }
+}
+.nav-pulse { animation: nav-pulse 1.8s ease-in-out infinite; }
 @keyframes shrink {
   from { width: 100%; }
   to   { width: 0%; }

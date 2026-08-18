@@ -31,6 +31,7 @@ import { FxLayer } from '../fx/FxLayer';
 import { storage } from '../../utils/storage';
 import type { GameSettings } from '../../utils/storage';
 import { audioManager } from '../../utils/audio';
+import { getMissingCerts } from '../../game/systems/OpeningSystem';
 
 export const GameScreen: React.FC = () => {
   const activePanel = useGameStore(s => s.activePanel);
